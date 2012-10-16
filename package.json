@@ -1,0 +1,40 @@
+{
+  "name": "mimosa-require",
+  "preferGlobal": "false",
+  "version": "0.0.1",
+  "homepage": "http://www.mimosajs.com",
+  "author": "David Bashford",
+  "description": "AMD/RequireJS module for Mimosa browser development workflow tool",
+  "contributors": [
+    {
+      "name": "David Bashford",
+      "email": "dbashford@hotmail.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dbashford/mimosa-require"
+  },
+  "keywords": [
+    "javascript",
+    "amd",
+    "require",
+    "requirejs",
+    "r.js",
+    "optimize",
+    "optimization",
+    "uglify",
+    "minify",
+    "mimosa",
+    "mmodule"
+  ],
+  "dependencies": {
+    "requirejs": "2.0.6",
+    "lodash": "0.7.0",
+    "mimosa-logger": "0.0.1"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.8"
+  }
+}
