@@ -53,4 +53,7 @@ class MimosaRequireModule
     requireRegister.buildDone()
     next()
 
+  aliasForPath: (libPath) ->
+    requireRegister.aliasForPath(libPath)
+
 module.exports = new MimosaRequireModule()
