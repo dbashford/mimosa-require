@@ -16,7 +16,7 @@ class Optimizer
     @almondText = minifier.performJSMinify(@almondText, almondInPath)
 
   optimize: (config, fileName) =>
-    return unless config.optimize
+    return unless config.isOptimize
     if fileName?
       logger.debug "Going to optimize for [[ #{fileName} ]]"
 

@@ -20,7 +20,7 @@ module.exports = class RequireRegister
   setConfig: (@config) ->
     @verify = @config.require.verify.enabled
     unless @rootJavaScriptDir?
-      @rootJavaScriptDir = if @config.virgin
+      @rootJavaScriptDir = if @config.isVirgin
         path.join @config.watch.sourceDir, @config.watch.javascriptDir
       else
         path.join @config.watch.compiledDir, @config.watch.javascriptDir
@@ -131,7 +131,7 @@ module.exports = class RequireRegister
     @_verifyConfigForFile(file)  for file in @requireFiles
     @_verifyFileDeps(file, deps) for file, deps of @depsRegistry
     @_verifyShims(file, shims) for file, shims of @shims
-    @_buildTree() unless @config.virgin
+    @_buildTree() unless @config.isVirgin
 
   _handleShims: (fileName, shims) ->
     if @startupComplete
@@ -215,7 +215,7 @@ module.exports = class RequireRegister
   _handleDeps: (fileName, deps) ->
     if @startupComplete
       @_verifyFileDeps(fileName, deps)
-      @_buildTree() unless @config.virgin
+      @_buildTree() unless @config.isVirgin
     else
       @depsRegistry[fileName] = deps
 
@@ -455,7 +455,7 @@ module.exports = class RequireRegister
 
   _fileExists: (filePath) ->
     return [true, filePath] if fs.existsSync filePath
-    if @config.virgin
+    if @config.isVirgin
       # templates is fine, will never be written, doesn't actually exist unless it is written
       return [true, filePath] if filePath is path.join(@rootJavaScriptDir, "templates.js")
 

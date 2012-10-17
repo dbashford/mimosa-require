@@ -8,14 +8,14 @@ class MimosaRequireModule
 
   lifecycleRegistration: (config, register, @logger) ->
 
-    return unless config.require.verify.enabled or config.optimize
+    return unless config.require.verify.enabled or config.isOptimize
     e = config.extensions
     register ['add','update','buildFile'],      'afterCompile',   @_requireRegister, [e.javascript...]
     register ['add','update','buildExtension'], 'afterCompile',   @_requireRegister, [e.template...]
     register ['remove'],                        'afterDelete',    @_requireDelete,   [e.javascript...]
     register ['buildDone'],                     'beforeOptimize', @_buildDone
 
-    if config.optimize
+    if config.isOptimize
       register ['add','update','remove'], 'afterWrite', @_requireOptimizeFile, [e.javascript..., e.template...]
       register ['buildDone'],             'optimize',   @_requireOptimize
 
@@ -31,7 +31,7 @@ class MimosaRequireModule
     return next() if options.isVendor
     options.files.forEach (file) ->
       if file.outputFileName and file.outputFileText
-        if config.virgin
+        if config.isVirgin
           requireRegister.process(file.inputFileName, file.outputFileText)
         else
           requireRegister.process(file.outputFileName, file.outputFileText)
