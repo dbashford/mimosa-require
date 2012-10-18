@@ -35,6 +35,7 @@ module.exports = class RequireRegister
     requirejs.config = require
     # pretend this isn't node
     exports = undefined
+    window = {}
     @_requirejs(requirejs)
     try
       eval(source)
