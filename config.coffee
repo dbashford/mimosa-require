@@ -1,4 +1,4 @@
-logger = require 'mimosa-logger'
+logger = require 'logmimosa'
 
 exports.defaults = ->
   require:

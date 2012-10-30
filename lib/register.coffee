@@ -2,7 +2,7 @@ path = require 'path'
 fs = require 'fs'
 
 _ = require 'lodash'
-logger =  require 'mimosa-logger'
+logger =  require 'logmimosa'
 
 module.exports = class RequireRegister
 

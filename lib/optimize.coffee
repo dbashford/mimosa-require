@@ -3,8 +3,9 @@ fs =   require 'fs'
 
 _ = require 'lodash'
 requirejs = require 'requirejs'
-logger =  require 'mimosa-logger'
-minifier = require 'mimosa-minify'
+logger =  require 'logmimosa'
+jsp = require("uglify-js").parser
+pro = require("uglify-js").uglify
 
 requireRegister = require './register'
 
@@ -13,7 +14,13 @@ class Optimizer
   constructor: ->
     almondInPath  = path.join __dirname, "assets", "almond.js"
     @almondText = fs.readFileSync almondInPath, "utf8"
-    @almondText = minifier.minifyJS(@almondText, almondInPath)
+    try
+      @almondText = jsp.parse @almondText
+      @almondText = pro.ast_mangle @almondText, {except:['require','requirejs','define']}
+      @almondText = pro.ast_squeeze @almondText
+      @almondText = pro.gen_code @almondText
+    catch err
+      logger.warn "Minification failed on [[ #{fileName} ]], writing unminified source\n#{err}"
 
   optimize: (config, fileName) =>
     return unless config.isOptimize
