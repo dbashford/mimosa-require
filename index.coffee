@@ -1,3 +1,5 @@
+"use strict"
+
 config = require './config'
 plugin = require './plugin'
 

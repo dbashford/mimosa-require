@@ -1,3 +1,5 @@
+"use strict"
+
 requireRegister = require './lib/register'
 optimizer = require './lib/optimize'
 
