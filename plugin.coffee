@@ -7,8 +7,8 @@ exports.registration = (config, register) ->
 
   return unless config.require.verify.enabled or config.isOptimize
   e = config.extensions
-  register ['add','update','buildFile'],      'afterCompile',   _requireRegister, [e.javascript...]
-  register ['add','update','buildExtension'], 'afterCompile',   _requireRegister, [e.template...]
+  register ['add','update','buildFile'],      'betweenCompileWrite',   _requireRegister, [e.javascript...]
+  register ['add','update','buildExtension'], 'betweenCompileWrite',   _requireRegister, [e.template...]
   register ['remove'],                        'afterDelete',    _requireDelete,   [e.javascript...]
   register ['buildDone'],                     'beforeOptimize', _buildDone
 
