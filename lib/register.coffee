@@ -329,8 +329,13 @@ module.exports = class RequireRegister
     # handle plugins
     if dep.indexOf('!') >= 0
       [plugin, dep] = dep.split('!')
-      logger.debug "Is plugin dependency, going to verify both plugin path [[ #{plugin}]] and dependency after '!', [[ #{dep} ]] "
+      logger.debug "Is plugin dependency, going to verify plugin path [[ #{plugin}]]"
       @_verifyDep(fileName, plugin)
+
+      if dep?.length is 0
+        return logger.debug "Plugin does not also have dependency"
+
+      logger.debug "Also going to verify plugin dependency [[ #{dep} ]]"
       plugin = true
 
     # resolve path, if mapped, find already calculated map path
