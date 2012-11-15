@@ -24,15 +24,22 @@ class Optimizer
     catch err
       logger.warn "Minification failed on [[ #{fileName} ]], writing unminified source\n#{err}"
 
-  optimize: (config, fileName) =>
+  optimize: (config, fileName, doneCallback) =>
     return unless config.isOptimize
     if fileName?
       logger.debug "Going to optimize for [[ #{fileName} ]]"
 
     if @currentlyRunning
       return logger.debug "...but nevermind, optmization is already running."
-
     @currentlyRunning = true
+
+    @_done = (almondOutPath) ->
+      @currentlyRunning = false
+      if almondOutPath?
+        logger.debug "Removing Almond at [[ #{almondOutPath} ]]"
+        fs.unlinkSync almondOutPath if fs.existsSync almondOutPath
+      logger.info "Requirejs optimization complete."
+      doneCallback()
 
     if config.require.optimize.inferConfig is false
       logger.debug "Optimizer will not be inferring config"
@@ -85,13 +92,6 @@ class Optimizer
       runConfig = @_setupConfigForModule(config, file, baseUrl)
       logger.info "Beginning requirejs optimization for module [[ #{runConfig.include[0]} ]]"
       @_executeOptimize(runConfig, done)
-
-  _done: (almondOutPath)->
-    @currentlyRunning = false
-    if almondOutPath?
-      logger.debug "Removing Almond at [[ #{almondOutPath} ]]"
-      fs.unlinkSync almondOutPath if fs.existsSync almondOutPath
-    logger.info "Requirejs optimization complete."
 
   _executeOptimize: (runConfig, callback) =>
     logger.debug "Mimosa is going to run r.js optimization with the following config:\n#{JSON.stringify(runConfig, null, 2)}"

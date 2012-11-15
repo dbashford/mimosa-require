@@ -40,14 +40,17 @@ _requireRegister = (config, options, next) ->
 
 _requireOptimizeFile = (config, options, next) ->
   return next() unless options.files?.length > 0
+
+  filesDone = 0
+  done = ->
+    next() if options.files.length is ++filesDone
+
   options.files.forEach (file) ->
     if file.outputFileName and file.outputFileText
-      optimizer.optimize(config, file.outputFileName)
-  next()
+      optimizer.optimize config, file.outputFileName, done
 
 _requireOptimize = (config, options, next) ->
-  optimizer.optimize(config)
-  next()
+  optimizer.optimize(config, null, next)
 
 _buildDone = (config, options, next) ->
   requireRegister.buildDone()
