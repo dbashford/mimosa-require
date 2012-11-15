@@ -91,11 +91,12 @@ module.exports = class RequireRegister
       [deps, config] = @_requireOverride(deps, callback, errback, optional)
       logger.debug "Inside require function call for [[ #{fileName} ]], file has depedencies of:\n#{deps}"
 
-      if config
+      if config or deps
         logger.debug "[[ #{fileName} ]] has require configuration inside of it:\n#{JSON.stringify(config, null, 2)}"
         @requireFiles.push fileName
-        @_handleConfigPaths(fileName, config.map ? null, config.paths ? null)
-        @_handleShims(fileName, config.shim ? null)
+        if config
+          @_handleConfigPaths(fileName, config.map ? null, config.paths ? null)
+          @_handleShims(fileName, config.shim ? null)
       @_handleDeps(fileName, deps)
 
   _define: (fileName) ->
