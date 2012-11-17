@@ -1,20 +1,25 @@
 "use strict"
 
+logger = require 'logmimosa'
+
 requireRegister = require './lib/register'
 optimizer = require './lib/optimize'
+builder = require './lib/builder'
 
 exports.registration = (config, register) ->
 
   return unless config.require.verify.enabled or config.isOptimize
   e = config.extensions
-  register ['add','update','buildFile'],      'betweenCompileWrite',   _requireRegister, [e.javascript...]
-  register ['add','update','buildExtension'], 'betweenCompileWrite',   _requireRegister, [e.template...]
-  register ['remove'],                        'afterDelete',    _requireDelete,   [e.javascript...]
-  register ['buildDone'],                     'beforeOptimize', _buildDone
+  register ['add','update','buildFile'],      'betweenCompileWrite', _requireRegister, [e.javascript...]
+  register ['add','update','buildExtension'], 'betweenCompileWrite', _requireRegister, [e.template...]
+  register ['remove'],                        'afterDelete',         _requireDelete,   [e.javascript...]
+  register ['buildDone'],                     'beforeOptimize',      _buildDone
 
   if config.isOptimize
-    register ['add','update','remove'], 'afterWrite', _requireOptimizeFile, [e.javascript..., e.template...]
-    register ['buildDone'],             'optimize',   _requireOptimize
+    register ['add','update','remove'], 'beforeOptimize', _buildOptimizeConfigsFile, [e.javascript..., e.template...]
+    register ['add','update','remove'], 'optimize',       _requireOptimize,          [e.javascript..., e.template...]
+    register ['buildDone'],             'beforeOptimize', _buildOptimizeConfigs
+    register ['buildDone'],             'optimize',       _requireOptimize
 
   requireRegister.setConfig(config)
 
@@ -38,19 +43,41 @@ _requireRegister = (config, options, next) ->
 
   next()
 
-_requireOptimizeFile = (config, options, next) ->
+_buildOptimizeConfigsFile = (config, options, next) ->
   return next() unless options.files?.length > 0
 
   filesDone = 0
-  done = ->
-    next() if options.files.length is ++filesDone
+  allRunConfigs = []
+  done = (runConfigs) ->
+    if runConfigs
+      allRunConfigs = allRunConfigs.concat runConfigs
+    if options.files.length is ++filesDone
+      if allRunConfigs.length > 0
+        options.runConfigs = allRunConfigs
+      logger.debug "Total of [[ #{allRunConfigs.length} ]] r.js run configs generated."
+      next()
 
   options.files.forEach (file) ->
     if file.outputFileName and file.outputFileText
-      optimizer.optimize config, file.outputFileName, done
+      builder.buildRunConfig config, file.outputFileName, done
 
-_requireOptimize = (config, options, next) ->
-  optimizer.optimize(config, null, next)
+_buildOptimizeConfigs = (config, options, next) ->
+  builder.buildRunConfig config, null, (runConfigs) ->
+    options.runConfigs = runConfigs if runConfigs
+    logger.debug "Total of [[ #{runConfigs.length} ]] r.js run configs generated."
+    next()
+
+_requireOptimize = (config, options, done) ->
+  return done() unless options.runConfigs
+  return done() if options.runConfigs.length is 0
+
+  i = 0
+  next = =>
+    if i < options.runConfigs.length
+      optimizer.execute options.runConfigs[i++], next
+    else
+      done()
+  next()
 
 _buildDone = (config, options, next) ->
   requireRegister.buildDone()
