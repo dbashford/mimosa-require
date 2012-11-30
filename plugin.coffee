@@ -13,13 +13,13 @@ exports.registration = (config, register) ->
   register ['add','update','buildFile'],      'betweenCompileWrite', _requireRegister, [e.javascript...]
   register ['add','update','buildExtension'], 'betweenCompileWrite', _requireRegister, [e.template...]
   register ['remove'],                        'afterDelete',         _requireDelete,   [e.javascript...]
-  register ['buildDone'],                     'beforeOptimize',      _buildDone
+  register ['postBuild'],                     'beforeOptimize',      _buildDone
 
   if config.isOptimize
     register ['add','update','remove'], 'beforeOptimize', _buildOptimizeConfigsFile, [e.javascript..., e.template...]
     register ['add','update','remove'], 'optimize',       _requireOptimize,          [e.javascript..., e.template...]
-    register ['buildDone'],             'beforeOptimize', _buildOptimizeConfigs
-    register ['buildDone'],             'optimize',       _requireOptimize
+    register ['postBuild'],             'beforeOptimize', _buildOptimizeConfigs
+    register ['postBuild'],             'optimize',       _requireOptimize
 
   requireRegister.setConfig(config)
 
