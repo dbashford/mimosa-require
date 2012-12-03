@@ -15,7 +15,7 @@ class Optimizer
       logger.debug "Going to optimize for [[ #{fileName} ]]"
 
     if config.require.optimize.inferConfig is false
-      _configForNoInfer(config, doneCallback)
+      @_configForNoInfer(config, doneCallback)
     else
       files = if fileName
         logger.debug "Looking for main modules that need optimizing for file [[ #{fileName} ]]"

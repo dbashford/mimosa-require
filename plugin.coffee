@@ -63,8 +63,11 @@ _buildOptimizeConfigsFile = (config, options, next) ->
 
 _buildOptimizeConfigs = (config, options, next) ->
   builder.buildRunConfig config, null, (runConfigs) ->
-    options.runConfigs = runConfigs if runConfigs
-    logger.debug "Total of [[ #{runConfigs.length} ]] r.js run configs generated."
+    if runConfigs
+      options.runConfigs = runConfigs
+      logger.debug "Total of [[ #{runConfigs.length} ]] r.js run configs generated."
+    else
+      logger.debug "No r.js run configs generated."
     next()
 
 _requireOptimize = (config, options, done) ->
