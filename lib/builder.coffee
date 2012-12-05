@@ -66,7 +66,9 @@ class Optimizer
     runConfig.insertRequire = [name]        unless runConfig.insertRequire? or runConfig.insertRequire is null
     runConfig.wrap = true                   unless runConfig.wrap? or runConfig.wrap is null
     runConfig.name = 'almond'               unless runConfig.name? or runConfig.name is null
-    runConfig.out = if runConfig.out
+    runConfig.out = if runConfig.out is null
+      undefined
+    else if runConfig.out
       path.join runConfig.baseUrl, runConfig.out
     else
       path.join runConfig.baseUrl, name + "-built.js"
