@@ -26,12 +26,10 @@ class Optimize
       logger.info "r.js name changed from default of 'almond', so not using almond.js"
     else
       almondOutPath = path.join runConfig.baseUrl, "almond.js"
-      fs.writeFileSync almondOutPath, @almondText, 'utf8'
+      unless fs.existsSync(almondOutPath)
+        fs.writeFileSync almondOutPath, @almondText, 'utf8'
 
     @_executeOptimize runConfig, =>
-      if almondOutPath?
-        logger.debug "Removing Almond at [[ #{almondOutPath} ]]"
-        fs.unlinkSync almondOutPath if fs.existsSync almondOutPath
       logger.info "Requirejs optimization complete."
       callback()
 
@@ -40,6 +38,12 @@ class Optimize
     logger.debug "Config for r.js run:\n#{JSON.stringify(runConfig, null, 2)}"
     try
       requirejs.optimize runConfig, (buildResponse) =>
+        reportLines = buildResponse.split("\n")
+        for reportLine, i in reportLines
+          if reportLine.indexOf('---') is 0
+            runConfig.filesUsed = reportLines.splice(i + 1, reportLines.length - (i + 2))
+            break
+
         logger.success "The compiled file [[ #{runConfig.out} ]] is ready for use.", true
         callback()
     catch err

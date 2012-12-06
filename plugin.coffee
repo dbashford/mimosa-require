@@ -1,6 +1,11 @@
 "use strict"
 
+fs = require 'fs'
+path = require 'path'
+
 logger = require 'logmimosa'
+wrench = require "wrench"
+_ = require 'lodash'
 
 requireRegister = require './lib/register'
 optimizer = require './lib/optimize'
@@ -20,6 +25,10 @@ exports.registration = (config, register) ->
     register ['add','update','remove'], 'optimize',       _requireOptimize,          [e.javascript..., e.template...]
     register ['postBuild'],             'beforeOptimize', _buildOptimizeConfigs
     register ['postBuild'],             'optimize',       _requireOptimize
+
+    if config.isBuild
+      register ['add','update','remove'], 'afterOptimize',  _removeCombined,           [e.javascript..., e.template...]
+      register ['postBuild'],             'optimize',       _removeCombined
 
   requireRegister.setConfig(config)
 
@@ -80,6 +89,30 @@ _requireOptimize = (config, options, done) ->
       optimizer.execute options.runConfigs[i++], next
     else
       done()
+  next()
+
+_removeCombined = (config, options, next) ->
+  for runConfig in options.runConfigs
+    if runConfig.filesUsed? and Array.isArray(runConfig.filesUsed)
+      for f in runConfig.filesUsed
+        if fs.existsSync(f)
+          logger.debug "Removing [[ #{f} ]]"
+          fs.unlinkSync(f)
+
+  jsDir = config.watch.compiledJavascriptDir
+  directories = wrench.readdirSyncRecursive(jsDir).map (f) -> path.join jsDir, f
+  directories = directories.filter (f) -> fs.statSync(f).isDirectory()
+
+  _.sortBy(directories, 'length').reverse().forEach (dirPath) ->
+    if fs.existsSync dirPath
+      try
+        fs.rmdirSync dirPath
+        logger.debug "Deleted directory [[ #{dirPath} ]]"
+      catch err
+        if err?.code is not "ENOTEMPTY"
+          logger.error "Unable to delete directory, #{dirPath}"
+          logger.error err
+
   next()
 
 _buildDone = (config, options, next) ->
