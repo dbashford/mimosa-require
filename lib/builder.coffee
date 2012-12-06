@@ -55,7 +55,8 @@ class Optimizer
       callback([config.require.optimize.overrides])
 
   _setupConfigForModule: (config, file) =>
-    runConfig = _.extend({}, config.require.optimize.overrides)
+    runConfig = _.clone(config.require.optimize.overrides, true)
+
     baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
     name = file.replace(baseUrl + path.sep, '').replace('.js', '')
 
