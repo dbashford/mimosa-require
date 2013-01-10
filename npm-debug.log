@@ -1,0 +1,33 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'node', '/usr/local/bin/npm', 'publish' ]
+2 info using npm@1.1.45
+3 info using node@v0.8.4
+4 verbose config file /Users/dbashford/.npmrc
+5 verbose config file /usr/local/etc/npmrc
+6 verbose config file /usr/local/lib/node_modules/npm/npmrc
+7 verbose publish [ '.' ]
+8 verbose read json /Users/dbashford/mygithub/mimosa-require/package.json
+9 verbose cache add [ '.', null ]
+10 silly cache add name=undefined spec="." args=[".",null]
+11 verbose parsed url { pathname: '.', path: '.', href: '.' }
+12 silly lockFile 3a52ce78- .
+13 verbose lock . /Users/dbashford/.npm/3a52ce78-.lock
+14 verbose read json package.json
+15 silly lockFile 3a52ce78- .
+16 error addLocal Could not install .
+17 error Failed to parse json
+17 error Unexpected number
+18 error File: package.json
+19 error Failed to parse package.json data.
+19 error package.json must be actual JSON, not just JavaScript.
+19 error
+19 error This is not a bug in npm.
+19 error Tell the package author to fix their package.json file. JSON.parse
+20 error System Darwin 11.4.2
+21 error command "node" "/usr/local/bin/npm" "publish"
+22 error cwd /Users/dbashford/mygithub/mimosa-require
+23 error node -v v0.8.4
+24 error npm -v 1.1.45
+25 error file package.json
+26 error code EJSONPARSE
+27 verbose exit [ 1, true ]
