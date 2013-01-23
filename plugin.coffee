@@ -92,6 +92,8 @@ _requireOptimize = (config, options, done) ->
   next()
 
 _removeCombined = (config, options, next) ->
+  return next() unless options.runConfigs
+
   for runConfig in options.runConfigs
     if runConfig.filesUsed? and Array.isArray(runConfig.filesUsed)
       for f in runConfig.filesUsed
