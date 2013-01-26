@@ -63,6 +63,7 @@ class Optimizer
     baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
     name = file.replace(baseUrl + path.sep, '').replace('.js', '')
 
+    runConfig.logLevel = 3                  unless runConfig.logLevel? or runConfig.logLevel is null
     runConfig.baseUrl = baseUrl             unless runConfig.baseUrl? or runConfig.baseUrl is null
     runConfig.mainConfigFile = file         unless runConfig.mainConfigFile? or runConfig.mainConfigFile is null
     runConfig.findNestedDependencies = true unless runConfig.findNestedDependencies? or runConfig.findNestedDependencies is null
