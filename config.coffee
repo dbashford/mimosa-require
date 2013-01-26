@@ -39,7 +39,10 @@ exports.validate = (config, validators) ->
 
     if validators.ifExistsIsObject(errors, "require.optimize", config.require.optimize)
       validators.ifExistsIsBoolean(errors, "require.optimize.inferConfig", config.require.optimize.inferConfig)
-      validators.ifExistsIsObject(errors, "require.optimize.overrides", config.require.optimize.overrides)
+      if config.require.optimize.overrides?
+        obj = config.require.optimize.overrides
+        unless (typeof obj is "object" and not Array.isArray(obj)) or typeof obj is "function"
+          errors.push "require.optimize.overrides must be an object or a function"
 
   if errors.length is 0
     # need to set some requirejs stuff
