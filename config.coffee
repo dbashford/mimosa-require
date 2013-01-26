@@ -27,7 +27,11 @@ exports.placeholder = ->
                                # make tweaks uncomment this line and add the r.js config
                                # (http://requirejs.org/docs/optimization.html#options) as new
                                # paramters inside the overrides ojbect. To unset Mimosa's defaults,
-                               # set a property to null
+                               # set a property to null.
+                               #
+                               # overrides can also be a function that takes mimosa-require's
+                               # inferred config for each module. This allows the inferred config
+                               # to be updated and enhanced instead of just overridden.
   """
 
 exports.validate = (config, validators) ->
@@ -35,7 +39,6 @@ exports.validate = (config, validators) ->
   if validators.ifExistsIsObject(errors, "require config", config.require)
     if validators.ifExistsIsObject(errors, "require.verify", config.require.verify)
       validators.ifExistsIsBoolean(errors, "require.verify.enabled", config.require.verify.enabled)
-
 
     if validators.ifExistsIsObject(errors, "require.optimize", config.require.optimize)
       validators.ifExistsIsBoolean(errors, "require.optimize.inferConfig", config.require.optimize.inferConfig)
