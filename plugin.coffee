@@ -15,6 +15,7 @@ exports.registration = (config, register) ->
 
   return unless config.require.verify.enabled or config.isOptimize
   e = config.extensions
+  register ['postClean'],                     'init',                _clean
   register ['add','update','buildFile'],      'betweenCompileWrite', _requireRegister, [e.javascript...]
   register ['add','update','buildExtension'], 'betweenCompileWrite', _requireRegister, [e.template...]
   register ['remove'],                        'afterDelete',         _requireDelete,   [e.javascript...]
@@ -34,6 +35,18 @@ exports.registration = (config, register) ->
 
 exports.aliasForPath = (libPath) ->
   requireRegister.aliasForPath(libPath)
+
+_clean = (config, options, next) ->
+  jsDir = path.join config.watch.compiledDir, config.watch.javascriptDir
+  if fs.existsSync jsDir
+    files = wrench.readdirSyncRecursive(jsDir)
+      .filter (f) ->
+        /-built.js$/.test(f)
+      .map (f) ->
+        f = path.join jsDir, f
+        fs.unlinkSync f
+        logger.success "Deleted file [[ #{f} ]]"
+  next()
 
 _requireDelete = (config, options, next) ->
   return next() unless options.files?.length > 0
