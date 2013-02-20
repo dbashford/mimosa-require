@@ -358,7 +358,8 @@ module.exports = class RequireRegister
         @_registerDependency(fileName, dep)
       else
         #logger.debug "Cannot find dependency as path alias..."
-        pathWithDirReplaced = @_findPathWhenAliasDiectory(dep)
+        pathWithDirReplaced = @_findPathWhenAliasDiectory(dep, plugin)
+
         [pathExists, pathAsDirReplaced] = @_fileExists pathWithDirReplaced if pathWithDirReplaced?
 
         if pathWithDirReplaced and pathExists
@@ -416,14 +417,17 @@ module.exports = class RequireRegister
     else
       "#{fullPath}.js"
 
-  _findPathWhenAliasDiectory: (dep) ->
+  _findPathWhenAliasDiectory: (dep, plugin) ->
     pathPieces = dep.split('/')
     alias = @_findAlias(pathPieces[0], @aliasDirectories)
     if alias
       #logger.debug "Found alias as directory [[ #{alias} ]]"
       pathPieces[0] = alias
       fullPath = pathPieces.join(path.sep)
-      "#{path.normalize(fullPath)}.js"
+      if fullPath.match(/\.\w+$/) and plugin
+        fullPath
+      else
+        "#{path.normalize(fullPath)}.js"
     else
       null
 
