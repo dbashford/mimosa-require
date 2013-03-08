@@ -58,7 +58,7 @@ _requireRegister = (config, options, next) ->
   return next() if options.isVendor
   options.files.forEach (file) ->
     if file.outputFileName and file.outputFileText
-      return unless file.outputFileText.match(/\.js$/)
+      return unless file.outputFileName.match(/\.js$/)
       if config.isVirgin
         requireRegister.process(file.inputFileName, file.outputFileText)
       else
