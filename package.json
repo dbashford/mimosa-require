@@ -1,6 +1,6 @@
 {
   "name": "mimosa-require",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "homepage": "http://www.mimosajs.com",
   "author": "David Bashford",
   "description": "AMD/RequireJS module for Mimosa browser development workflow tool",
