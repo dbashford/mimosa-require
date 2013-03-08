@@ -51,7 +51,6 @@ exports.validate = (config, validators) ->
     # need to set some requirejs stuff
     if config.isOptimize and config.isMinify
       logger.info "Optimize and minify both selected, setting r.js optimize property to 'none'"
-      config.require.optimize.overrides.optimize = "none"
 
     # helpful shortcut
     config.requireRegister = config.require.verify.enabled or config.isOptimize

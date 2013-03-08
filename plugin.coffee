@@ -16,9 +16,9 @@ exports.registration = (config, register) ->
   return unless config.require.verify.enabled or config.isOptimize
   e = config.extensions
   register ['postClean'],                     'init',                _clean
-  register ['add','update','buildFile'],      'betweenCompileWrite', _requireRegister, [e.javascript...]
-  register ['add','update','buildExtension'], 'betweenCompileWrite', _requireRegister, [e.template...]
-  register ['remove'],                        'afterDelete',         _requireDelete,   [e.javascript...]
+  register ['add','update','buildFile'],      'betweenCompileWrite', _requireRegister, e.javascript
+  register ['add','update','buildExtension'], 'betweenCompileWrite', _requireRegister, e.template
+  register ['remove'],                        'afterDelete',         _requireDelete,   e.javascript
   register ['postBuild'],                     'beforeOptimize',      _buildDone
 
   if config.isOptimize
@@ -28,7 +28,7 @@ exports.registration = (config, register) ->
     register ['postBuild'],             'optimize',       _requireOptimize
 
     if config.isBuild
-      register ['add','update','remove'], 'afterOptimize',  _removeCombined,           [e.javascript..., e.template...]
+      register ['add','update','remove'], 'afterOptimize',  _removeCombined,         [e.javascript..., e.template...]
       register ['postBuild'],             'optimize',       _removeCombined
 
   requireRegister.setConfig(config)
@@ -41,7 +41,7 @@ _clean = (config, options, next) ->
   if fs.existsSync jsDir
     files = wrench.readdirSyncRecursive(jsDir)
       .filter (f) ->
-        /-built.js$/.test(f)
+        /-built\.js(\.map|\.src)?$/.test(f) or /almond\.js$/.test(f)
       .map (f) ->
         f = path.join jsDir, f
         fs.unlinkSync f

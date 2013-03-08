@@ -60,9 +60,13 @@ class Optimizer
     else
       {}
 
+    runConfig.optimize = if config.isOptimize and config.isMinify
+      "none"
+    else
+      "uglify2"
+
     baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
     name = file.replace(baseUrl + path.sep, '').replace('.js', '')
-
     runConfig.logLevel = 3                  unless runConfig.logLevel? or runConfig.logLevel is null
     runConfig.baseUrl = baseUrl             unless runConfig.baseUrl? or runConfig.baseUrl is null
     runConfig.mainConfigFile = file         unless runConfig.mainConfigFile? or runConfig.mainConfigFile is null
@@ -80,6 +84,10 @@ class Optimizer
 
     if typeof config.require.optimize.overrides is "function"
       config.require.optimize.overrides runConfig
+
+    if !config.isBuild and runConfig.optimize is "uglify2"
+      runConfig.generateSourceMaps = true       unless runConfig.generateSourceMaps?
+      runConfig.preserveLicenseComments = false unless runConfig.preserveLicenseComments?
 
     runConfig
 
