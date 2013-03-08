@@ -5,21 +5,12 @@ fs =   require 'fs'
 
 requirejs = require 'requirejs'
 logger =  require 'logmimosa'
-jsp = require("uglify-js").parser
-pro = require("uglify-js").uglify
 
 class Optimize
 
   constructor: ->
     almondInPath  = path.join __dirname, "assets", "almond.js"
     @almondText = fs.readFileSync almondInPath, "utf8"
-    try
-      @almondText = jsp.parse @almondText
-      @almondText = pro.ast_mangle @almondText, {except:['require','requirejs','define']}
-      @almondText = pro.ast_squeeze @almondText
-      @almondText = pro.gen_code @almondText
-    catch err
-      logger.warn "Minification failed on [[ #{almondInPath} ]], writing unminified source\n#{err}"
 
   execute: (runConfig, callback) =>
     if (runConfig.name? and runConfig.name isnt 'almond') or runConfig.name is null
