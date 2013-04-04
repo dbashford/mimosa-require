@@ -1,6 +1,7 @@
 "use strict"
 
 path = require 'path'
+fs = require 'fs'
 
 _ = require 'lodash'
 logger =  require 'logmimosa'
@@ -22,6 +23,10 @@ class Optimizer
         requireRegister.treeBasesForFile(fileName)
       else
         requireRegister.treeBases()
+
+      # remove common config file if there
+      if config.require.commonConfig
+        files = files.filter (f) -> f isnt config.require.commonConfig
 
       numFiles = files.length
       logger.debug "Mimosa found #{numFiles} base config files"
@@ -69,7 +74,10 @@ class Optimizer
     name = file.replace(baseUrl + path.sep, '').replace('.js', '')
     runConfig.logLevel = 3                  unless runConfig.logLevel? or runConfig.logLevel is null
     runConfig.baseUrl = baseUrl             unless runConfig.baseUrl? or runConfig.baseUrl is null
-    runConfig.mainConfigFile = file         unless runConfig.mainConfigFile? or runConfig.mainConfigFile is null
+
+    configFile = if fs.existsSync config.require.commonConfig then config.require.commonConfig else file
+    runConfig.mainConfigFile = configFile   unless runConfig.mainConfigFile? or runConfig.mainConfigFile is null
+
     runConfig.findNestedDependencies = true unless runConfig.findNestedDependencies? or runConfig.findNestedDependencies is null
     runConfig.include = [name]              unless runConfig.include? or runConfig.include is null
     runConfig.insertRequire = [name]        unless runConfig.insertRequire? or runConfig.insertRequire is null

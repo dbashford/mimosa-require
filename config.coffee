@@ -2,8 +2,11 @@
 
 logger = require 'logmimosa'
 
+path = require "path"
+
 exports.defaults = ->
   require:
+    commonConfig: "common"
     verify:
       enabled: true
     optimize :
@@ -15,6 +18,12 @@ exports.placeholder = ->
   \t
 
     # require:                 # configuration for requirejs options.
+      # commonConfig: "common" # The path from 'javascriptDir' to the location of common requirejs
+                               # config. This is config shared across multiple requirejs modules.
+                               # The should be or a requirejs.config({}) function call. Defaults
+                               # to a file named `common` in the root of the javascriptDir. Does
+                               # not need to exist, so can be left alone if a commonConfig is not
+                               # being used.
       # verify:                # settings for requirejs path verification
         # enabled: true        # Whether or not to perform verification
       # optimize :
@@ -46,6 +55,11 @@ exports.validate = (config, validators) ->
         obj = config.require.optimize.overrides
         unless (typeof obj is "object" and not Array.isArray(obj)) or typeof obj is "function"
           errors.push "require.optimize.overrides must be an object or a function"
+
+    config.require.commonConfig = if validators.ifExistsIsString(errors, "require.commonConfig", config.require.commonConfig)
+      path.join config.watch.compiledDir, config.watch.javascriptDir, config.require.commonConfig + ".js"
+    else
+      null
 
   if errors.length is 0
     # need to set some requirejs stuff

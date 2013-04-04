@@ -15,6 +15,7 @@ module.exports = class RequireRegister
   shims: {}
 
   requireStringRegex: /[^.]\s*require\s*\(\s*["']([^'"\s]+)["']\s*\)/g
+  requireStringRegexForArrayDeps: /[^.]\s*require\s*\(\s*\[\s*((["'][^'"\s]+["'][,\s]*?)+)\]/g
   commentRegExp: /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg
 
   setConfig: (@config) ->
@@ -27,12 +28,10 @@ module.exports = class RequireRegister
       #logger.debug "Root Javascript directory set at [[ #{@rootJavaScriptDir} ]]"
 
   process: (fileName, source) ->
-    require = @_require(fileName)
+    require = requirejs = @_require(fileName)
+    require.config = requirejs.config = require
     define = @_define(fileName)
     define.amd = {jquery:true}
-    require.config = require
-    requirejs = require
-    requirejs.config = require
     # pretend this isn't node
     exports = undefined
     window = {}
@@ -40,7 +39,7 @@ module.exports = class RequireRegister
     try
       eval(source)
     catch e
-      @_logger "File named [#{fileName}] is not wrapped in a 'require' or 'define' function call.", "warn"
+      @_logger "File named [[ #{fileName} ]] is not wrapped in a 'require' or 'define' function call.", "warn"
       @_logger "#{e}", 'warn'
 
   remove: (fileName) ->
@@ -56,7 +55,7 @@ module.exports = class RequireRegister
     @_verifyAll()
 
   treeBases: ->
-    Object.keys(@tree)
+    Object.keys @tree
 
   treeBasesForFile: (fileName) ->
     return [fileName] if @requireFiles.indexOf(fileName) >= 0
@@ -93,10 +92,11 @@ module.exports = class RequireRegister
 
       if config or deps
         #logger.debug "[[ #{fileName} ]] has require configuration inside of it:\n#{JSON.stringify(config, null, 2)}"
-        @requireFiles.push fileName
+        @requireFiles.push fileName unless fileName in @requireFiles
         if config
           @_handleConfigPaths(fileName, config.map ? null, config.paths ? null)
           @_handleShims(fileName, config.shim ? null)
+
       @_handleDeps(fileName, deps)
 
   _define: (fileName) ->
@@ -188,9 +188,7 @@ module.exports = class RequireRegister
           aDep = @_findMappedDependency(dep, aDep)
           #logger.debug "Dependency found in mappings [[ #{aDep} ]]"
 
-
       #logger.debug "Resolved depencency for file [[ #{dep} ]] to [[ #{aDep} ]]"
-
       if @tree[f].indexOf(aDep) < 0
         #logger.debug "Adding dependency [[ #{aDep} ]] to the tree"
         @tree[f].push(aDep)
@@ -201,7 +199,6 @@ module.exports = class RequireRegister
         @_addDepsToTree(f, aDep, dep)
       #else
         #logger.debug "[[ #{aDep} ]] may introduce a circular dependency"
-
 
   _handleConfigPaths: (fileName, maps, paths) ->
     if @startupComplete
@@ -364,7 +361,7 @@ module.exports = class RequireRegister
 
         if pathWithDirReplaced and pathExists
           # exact path does not exist, but can be found by following directory alias
-          @_registerDependency(fileName, pathWithDirReplaced)
+          @_registerDependency(fileName, dep)
         else
           @_logger "Dependency [[ #{dep} ]], inside file [[ #{fileName} ]], cannot be found."
           #logger.debug "Used this as full dependency path [[ #{fullDepPath} ]]"
@@ -440,12 +437,7 @@ module.exports = class RequireRegister
       callback = deps
       deps = []
 
-    if !deps.length and _.isFunction(callback)
-      if (callback.length)
-        callback.toString()
-          .replace(@commentRegExp, '')
-          .replace @requireStringRegex, (match, dep) ->
-            deps.push(dep)
+    @_findDepsInCallback(callback, deps)
 
     deps
 
@@ -462,7 +454,22 @@ module.exports = class RequireRegister
       #logger.warn "Not validating dependencies [[ #{deps} ]]. 'require' dependencies not set correctly. Dependencies should be an array."
       deps = []
 
+    @_findDepsInCallback(callback, deps)
+
     [deps, config]
+
+  _findDepsInCallback: (callback, deps) =>
+    if callback? and _.isFunction(callback)
+      callback.toString()
+        .replace(@commentRegExp, '')
+        .replace @requireStringRegexForArrayDeps, (match, dep) ->
+          dep.split(',').map (str) ->
+            str = str.trim()
+            str.substring(1, str.length - 1)
+          .forEach (str) ->
+            deps.push str
+        .replace @requireStringRegex, (match, dep) ->
+          deps.push(dep)
 
   _fileExists: (filePath) ->
     return [true, filePath] if fs.existsSync filePath

@@ -1,6 +1,6 @@
 {
   "name": "mimosa-require",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "homepage": "http://www.mimosajs.com",
   "author": "David Bashford",
   "description": "AMD/RequireJS module for Mimosa browser development workflow tool",
@@ -32,7 +32,7 @@
   ],
   "dependencies": {
     "requirejs": "2.1.5",
-    "lodash": "1.0.1",
+    "lodash": "1.1.1",
     "logmimosa": "0.4.0",
     "wrench": "1.4.4"
   },
