@@ -7,9 +7,9 @@ logger = require 'logmimosa'
 wrench = require "wrench"
 _ = require 'lodash'
 
-requireRegister = require './lib/register'
-optimizer = require './lib/optimize'
-builder = require './lib/builder'
+requireRegister = require './tasks/register'
+optimizer = require './tasks/optimize'
+builder = require './tasks/builder'
 
 exports.registration = (config, register) ->
 
@@ -49,12 +49,14 @@ _clean = (config, options, next) ->
   next()
 
 _requireDelete = (config, options, next) ->
-  return next() unless options.files?.length > 0
+  hasFiles = options.files?.length > 0
+  return next() unless hasFiles
   requireRegister.remove(options.files[0].inputFileName)
   next()
 
 _requireRegister = (config, options, next) ->
-  return next() unless options.files?.length > 0
+  hasFiles = options.files?.length > 0
+  return next() unless hasFiles
   return next() if options.isVendor
   options.files.forEach (file) ->
     if file.outputFileName and file.outputFileText
@@ -67,7 +69,8 @@ _requireRegister = (config, options, next) ->
   next()
 
 _buildOptimizeConfigsFile = (config, options, next) ->
-  return next() unless options.files?.length > 0
+  hasFiles = options.files?.length > 0
+  return next() unless hasFiles
 
   filesDone = 0
   allRunConfigs = []
