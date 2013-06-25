@@ -21,10 +21,7 @@ module.exports = class RequireRegister
   setConfig: (@config) ->
     @verify = @config.require.verify.enabled
     unless @rootJavaScriptDir?
-      @rootJavaScriptDir = if @config.isVirgin
-        path.join @config.watch.sourceDir, @config.watch.javascriptDir
-      else
-        path.join @config.watch.compiledDir, @config.watch.javascriptDir
+      @rootJavaScriptDir = path.join @config.watch.compiledDir, @config.watch.javascriptDir
       #logger.debug "Root Javascript directory set at [[ #{@rootJavaScriptDir} ]]"
 
   process: (fileName, source) ->
@@ -133,7 +130,7 @@ module.exports = class RequireRegister
     @_verifyConfigForFile(file)  for file in @requireFiles
     @_verifyFileDeps(file, deps) for file, deps of @depsRegistry
     @_verifyShims(file, shims) for file, shims of @shims
-    @_buildTree() unless @config.isVirgin
+    @_buildTree()
 
   _handleShims: (fileName, shims) ->
     if @startupComplete
@@ -214,7 +211,7 @@ module.exports = class RequireRegister
   _handleDeps: (fileName, deps) ->
     if @startupComplete
       @_verifyFileDeps(fileName, deps)
-      @_buildTree() unless @config.isVirgin
+      @_buildTree()
     else
       @depsRegistry[fileName] = deps
 
@@ -472,16 +469,8 @@ module.exports = class RequireRegister
           deps.push(dep)
 
   _fileExists: (filePath) ->
-    return [true, filePath] if fs.existsSync filePath
-    if @config.isVirgin
-      # templates is fine, will never be written, doesn't actually exist unless it is written
-      return [true, filePath] if filePath is path.join(@rootJavaScriptDir, "templates.js")
-
-      #logger.debug "Is virgin, need to try a bit harder to find file in source directories using extensions [[ #{@config.extensions.javascript} ]]"
-      for extension in @config.extensions.javascript
-        newExtensionfilePath = filePath.replace(/\.[^.]+$/, ".#{extension}")
-        return [true, newExtensionfilePath] if fs.existsSync newExtensionfilePath
-
+    if fs.existsSync filePath
+      return [true, filePath]
     [false,filePath]
 
 module.exports = new RequireRegister()
