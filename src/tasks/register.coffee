@@ -94,6 +94,9 @@ module.exports = class RequireRegister
           @_handleConfigPaths(fileName, config.map ? null, config.paths ? null)
           @_handleShims(fileName, config.shim ? null)
 
+      if config?.deps
+        deps = deps.concat config.deps
+
       @_handleDeps(fileName, deps)
 
   _define: (fileName) ->
