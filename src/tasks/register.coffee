@@ -13,10 +13,14 @@ module.exports = class RequireRegister
   tree: {}
   mappings: {}
   shims: {}
+  originalConfig: {}
 
   requireStringRegex: /[^.]\s*require\s*\(\s*["']([^'"\s]+)["']\s*\)/g
   requireStringRegexForArrayDeps: /[^.]\s*require\s*\(\s*\[\s*((["'][^'"\s]+["'][,\s]*?)+)\]/g
   commentRegExp: /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg
+
+  retrieveOriginalMergedConfig: ->
+    @originalConfig
 
   setConfig: (@config) ->
     @verify = @config.require.verify.enabled
@@ -94,10 +98,22 @@ module.exports = class RequireRegister
           @_handleConfigPaths(fileName, config.map ? null, config.paths ? null)
           @_handleShims(fileName, config.shim ? null)
 
-      if config?.deps
-        deps = deps.concat config.deps
+      if config?
+        if config.deps
+          deps = deps.concat config.deps
+
+        @_mergeOriginalConfig config
 
       @_handleDeps(fileName, deps)
+
+  _mergeOriginalConfig: (config) ->
+    ["shim", "paths", "map", "config"].forEach (name) =>
+      if config[name]?
+        conf = _.clone config[name]
+        if @originalConfig[name]?
+          @originalConfig[name] = _.extend @originalConfig[name], conf
+        else
+          @originalConfig[name] = conf
 
   _define: (fileName) ->
     (id, deps, funct) =>

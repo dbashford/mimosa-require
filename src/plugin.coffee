@@ -36,6 +36,9 @@ exports.registration = (config, register) ->
 exports.aliasForPath = (libPath) ->
   requireRegister.aliasForPath(libPath)
 
+exports.requireConfig = ->
+  requireRegister.retrieveOriginalMergedConfig()
+
 _clean = (config, options, next) ->
   jsDir = path.join config.watch.compiledDir, config.watch.javascriptDir
   if fs.existsSync jsDir
