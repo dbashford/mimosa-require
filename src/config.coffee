@@ -6,6 +6,7 @@ path = require "path"
 
 exports.defaults = ->
   require:
+    exclude:[]
     commonConfig: "common"
     verify:
       enabled: true
@@ -18,6 +19,10 @@ exports.placeholder = ->
   \t
 
     # require:                 # configuration for requirejs options.
+      # exclude:[]             # Regex or string paths. Paths can be absolute or relative to the
+                               # watch.javascriptDir. These files will be excluded from all
+                               # require module functionality. That includes AMD verification and
+                               # being considered a root level file to be optimized.
       # commonConfig: "common" # The path from 'javascriptDir' to the location of common requirejs
                                # config. This is config shared across multiple requirejs modules.
                                # The should be or a requirejs.config({}) function call. Defaults
@@ -46,6 +51,9 @@ exports.placeholder = ->
 exports.validate = (config, validators) ->
   errors = []
   if validators.ifExistsIsObject(errors, "require config", config.require)
+    javascriptDir = path.join config.watch.compiledDir, config.watch.javascriptDir
+    validators.ifExistsFileExcludeWithRegexAndString(errors, "require.exclude", config.require, javascriptDir)
+
     if validators.ifExistsIsObject(errors, "require.verify", config.require.verify)
       validators.ifExistsIsBoolean(errors, "require.verify.enabled", config.require.verify.enabled)
 

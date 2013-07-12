@@ -62,9 +62,14 @@ _requireRegister = (config, options, next) ->
   return next() unless hasFiles
   return next() if options.isVendor
   options.files.forEach (file) ->
-    if file.outputFileName and file.outputFileText
-      return unless file.outputFileName.match(/\.js$/)
-      requireRegister.process(file.outputFileName, file.outputFileText)
+    outf = file.outputFileName
+    if outf?.match(/\.js$/) and file.outputFileText
+      if config.require?.excludeRegex? and outf.match config.require.excludeRegex
+        logger.debug "skipping require processing of [[ #{outf} ]], file is excluded via regex"
+      else if config.require.exclude.indexOf(outf) > -1
+        logger.debug "skipping require wrapping for [[ #{outf} ]], file is excluded via string path"
+      else
+        requireRegister.process outf, file.outputFileText
 
   next()
 
