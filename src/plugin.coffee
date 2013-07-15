@@ -39,6 +39,9 @@ exports.aliasForPath = (libPath) ->
 exports.requireConfig = ->
   requireRegister.retrieveOriginalMergedConfig()
 
+exports.dependencyInfo = ->
+  requireRegister.dependencyInfo()
+
 _clean = (config, options, next) ->
   jsDir = path.join config.watch.compiledDir, config.watch.javascriptDir
   if fs.existsSync jsDir
@@ -141,4 +144,5 @@ _removeCombined = (config, options, next) ->
 
 _buildDone = (config, options, next) ->
   requireRegister.buildDone()
+  exports.dependencyInfo()
   next()

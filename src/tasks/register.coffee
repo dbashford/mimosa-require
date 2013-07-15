@@ -22,6 +22,29 @@ module.exports = class RequireRegister
   retrieveOriginalMergedConfig: ->
     @originalConfig
 
+  dependencyInfo: =>
+    reg = {}
+    for f, deps of @depsRegistry
+      reg[f] = []
+      for dep in deps
+        if fs.existsSync dep
+          reg[f].push dep
+        else
+          aliasResolved = @_findAlias dep, @aliasFiles
+          if aliasResolved
+            if aliasResolved.indexOf('MAPPED') is 0
+              mappedPath = @_findMappedDependency(f, aliasResolved)
+              if mappedPath
+                reg[f].push mappedPath
+            else
+              reg[f].push aliasResolved
+          else
+            resolvedDirectory = @_findPathWhenAliasDiectory dep, false
+            if resolvedDirectory
+              reg[f].push resolvedDirectory
+
+    reg
+
   setConfig: (@config) ->
     @verify = @config.require.verify.enabled
     unless @rootJavaScriptDir?
@@ -163,7 +186,7 @@ module.exports = class RequireRegister
 
     for name, config of shims
       #logger.debug "Processing shim [[ #{name} ]] with config of [[ #{JSON.stringify(config)} ]]"
-      unless @_fileExists(@_resolvePath(fileName, name))[0]
+      unless fs.existsSync @_resolvePath(fileName, name)
         alias = @_findAlias(name, @aliasFiles)
         unless alias
           @_logger "Shim path [[ #{name} ]] inside file [[ #{fileName} ]] cannot be found."
@@ -172,7 +195,7 @@ module.exports = class RequireRegister
       if deps?
         for dep in deps
           #logger.debug "Resolving shim dependency [[ #{dep} ]]"
-          unless @_fileExists(@_resolvePath(fileName, dep))[0]
+          unless fs.existsSync @_resolvePath(fileName, dep)
             alias = @_findAlias(dep, @aliasFiles)
             unless alias
               @_logger "Shim [[ #{name} ]] inside file [[ #{fileName} ]] refers to a dependency that cannot be found [[ #{dep} ]]."
@@ -191,9 +214,7 @@ module.exports = class RequireRegister
       return #logger.debug "Dependency registry has no depedencies for [[ #{dep} ]]"
 
     for aDep in @depsRegistry[dep]
-      exists = @_fileExists(aDep)[0]
-
-      unless exists
+      unless fs.existsSync aDep
         #logger.debug "Cannot find dependency [[ #{aDep} ]] for file [[ #{dep} ]], checking aliases/paths/maps"
         aDep = @_findAlias(aDep, @aliasFiles)
 
@@ -256,8 +277,7 @@ module.exports = class RequireRegister
     for module, mappings of maps
       if module isnt '*'
         fullDepPath = @_resolvePath(fileName, module)
-        [exists, fullDepPath] = @_fileExists fullDepPath
-        if exists
+        if fs.existsSync fullDepPath
           #logger.debug "Verified path for module [[ #{module} ]] at [[ #{fullDepPath} ]]"
           delete maps[module]
           maps[fullDepPath] = mappings
@@ -275,12 +295,10 @@ module.exports = class RequireRegister
           @aliasFiles[fileName][alias] = "MAPPED!#{alias}"
           continue
 
-        [exists, fullDepPath] = @_fileExists fullDepPath
-        unless exists
+        unless fs.existsSync fullDepPath
           alias = @_findAlias(aliasPath, @aliasFiles)
-          if alias then exists = true
 
-        if exists
+        if alias
           #logger.debug "Found mapped dependency [[ #{alias} ]] at [[ #{fullDepPath} ]]"
           @aliasFiles[fileName][alias] = "MAPPED!#{alias}"
           maps[module][alias] = fullDepPath
@@ -305,9 +323,7 @@ module.exports = class RequireRegister
       return @aliasFiles[fileName][alias] = aliasPath
 
     fullDepPath = @_resolvePath(fileName, aliasPath)
-    [exists, fullDepPath] = @_fileExists fullDepPath
-
-    if exists
+    if fs.existsSync fullDepPath
       if fs.statSync(fullDepPath).isDirectory()
         #logger.debug "Path found at [[ #{fullDepPath}]], is a directory, adding to list of alias directories"
         @aliasDirectories[fileName][alias] = fullDepPath
@@ -316,8 +332,7 @@ module.exports = class RequireRegister
         @aliasFiles[fileName][alias] = fullDepPath
     else
       pathAsDirectory = fullDepPath.replace(/.js$/, '')
-      [pathAsDirExists, pathAsDirectory] = @_fileExists pathAsDirectory
-      if pathAsDirExists
+      if fs.existsSync pathAsDirectory
         #logger.debug "Path exists as directory, [[ #{pathAsDirectory} ]], adding to list of alias directories"
         @aliasDirectories[fileName] ?= {}
         @aliasDirectories[fileName][alias] = pathAsDirectory
@@ -359,8 +374,7 @@ module.exports = class RequireRegister
     else
       @_resolvePath(fileName, dep, plugin)
 
-    [exists, fullDepPath]  = @_fileExists fullDepPath
-    if exists
+    if fs.existsSync fullDepPath
       # file exists, register it
       @_registerDependency(fileName, fullDepPath)
     else
@@ -372,10 +386,7 @@ module.exports = class RequireRegister
       else
         #logger.debug "Cannot find dependency as path alias..."
         pathWithDirReplaced = @_findPathWhenAliasDiectory(dep, plugin)
-
-        [pathExists, pathAsDirReplaced] = @_fileExists pathWithDirReplaced if pathWithDirReplaced?
-
-        if pathWithDirReplaced and pathExists
+        if pathWithDirReplaced? and fs.existsSync pathWithDirReplaced
           # exact path does not exist, but can be found by following directory alias
           @_registerDependency(fileName, dep)
         else
@@ -486,10 +497,5 @@ module.exports = class RequireRegister
             deps.push str
         .replace @requireStringRegex, (match, dep) ->
           deps.push(dep)
-
-  _fileExists: (filePath) ->
-    if fs.existsSync filePath
-      return [true, filePath]
-    [false,filePath]
 
 module.exports = new RequireRegister()
