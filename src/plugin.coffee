@@ -144,5 +144,4 @@ _removeCombined = (config, options, next) ->
 
 _buildDone = (config, options, next) ->
   requireRegister.buildDone()
-  exports.dependencyInfo()
   next()

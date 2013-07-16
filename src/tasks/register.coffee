@@ -43,6 +43,27 @@ module.exports = class RequireRegister
             if resolvedDirectory
               reg[f].push resolvedDirectory
 
+    for shimOrigConfigFile, shimConfigs of @shims
+      for name, config of shimConfigs
+        deps = if Array.isArray(config) then config else config.deps
+        if deps?
+          resolvedPath = @_resolvePath(shimOrigConfigFile, name)
+          f = if fs.existsSync resolvedPath
+            f = resolvedPath
+          else
+            f = @_findAlias name, @aliasFiles
+
+          if f
+            reg[f] = []
+            for dep in deps
+              depPath = @_resolvePath(shimOrigConfigFile, dep)
+              if fs.existsSync depPath
+                reg[f].push depPath
+              else
+                aliasResolved = @_findAlias dep, @aliasFiles
+                if aliasResolved
+                  reg[f].push aliasResolved
+
     reg
 
   setConfig: (@config) ->
