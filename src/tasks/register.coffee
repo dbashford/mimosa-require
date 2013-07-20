@@ -18,6 +18,7 @@ module.exports = class RequireRegister
   requireStringRegex: /[^.]\s*require\s*\(\s*["']([^'"\s]+)["']\s*\)/g
   requireStringRegexForArrayDeps: /[^.]\s*require\s*\(\s*\[\s*((["'][^'"\s]+["'][,\s]*?)+)\]/g
   commentRegExp: /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg
+  webPathRegex: /^(\/\/[a-zA-Z]|http)/
 
   retrieveOriginalMergedConfig: ->
     @originalConfig
@@ -311,7 +312,7 @@ module.exports = class RequireRegister
     for module, mappings of maps
       for alias, aliasPath of mappings
         fullDepPath = @_resolvePath(fileName, aliasPath)
-        if fullDepPath.indexOf('http') is 0
+        if @_isWebPath fullDepPath
           #logger.debug "Web path [[ #{fullDepPath} ]] for alias [[ #{alias} ]]being accepted"
           @aliasFiles[fileName][alias] = "MAPPED!#{alias}"
           continue
@@ -326,6 +327,9 @@ module.exports = class RequireRegister
         else
           @_logger "Mapping inside file [[ #{fileName} ]], for module [[ #{module} ]] has path that cannot be found [[ #{aliasPath} ]]."
 
+  _isWebPath: (filePath) ->
+    @webPathRegex.test filePath
+
   _verifyConfigPath: (fileName, alias, aliasPath) ->
     #logger.debug "Verifying configPath in fileName [[ #{fileName} ]], path alias [[ #{alias} ]], with aliasPath(s) of [[ #{aliasPath} ]]"
     if Array.isArray(aliasPath)
@@ -339,7 +343,7 @@ module.exports = class RequireRegister
       return #logger.debug "Is mapped path [[ #{aliasPath} ]]"
 
     # as are web resources, CDN, etc
-    if aliasPath.indexOf('http') is 0
+    if @_isWebPath aliasPath
       #logger.debug "Is web resource path [[ #{aliasPath} ]]"
       return @aliasFiles[fileName][alias] = aliasPath
 
@@ -372,7 +376,7 @@ module.exports = class RequireRegister
       return #logger.debug "Encountered keyword-esque dependency [[ #{dep} ]], ignoring."
 
     # as are web resources, CDN, etc
-    if dep.indexOf('http') is 0
+    if @_isWebPath dep
       #logger.debug "Is web resource dependency [[ #{dep} ]], no further checking required"
       return @_registerDependency(fileName, dep)
 
