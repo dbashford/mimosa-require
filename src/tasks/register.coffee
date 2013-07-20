@@ -400,6 +400,11 @@ module.exports = class RequireRegister
       @_resolvePath(fileName, dep, plugin)
 
     if fs.existsSync fullDepPath
+      for fileAliasList in _.values @aliasFiles
+        if _.values(fileAliasList).indexOf(fullDepPath) > -1
+          # Path has been aliased so alias must be used
+          return logger.error "Dependency [[ #{dep} ]] in [[ #{fileName} ]] has been aliased in the paths config and the alias must be used."
+
       # file exists, register it
       @_registerDependency(fileName, fullDepPath)
     else
