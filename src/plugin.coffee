@@ -39,8 +39,8 @@ exports.aliasForPath = (libPath) ->
 exports.requireConfig = ->
   requireRegister.retrieveOriginalMergedConfig()
 
-exports.dependencyInfo = ->
-  requireRegister.dependencyInfo()
+exports.dependencyInfo = (config) ->
+  requireRegister.dependencyInfo(config)
 
 _clean = (config, options, next) ->
   jsDir = path.join config.watch.compiledDir, config.watch.javascriptDir

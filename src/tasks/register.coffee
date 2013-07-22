@@ -23,7 +23,7 @@ module.exports = class RequireRegister
   retrieveOriginalMergedConfig: ->
     @originalConfig
 
-  dependencyInfo: =>
+  dependencyInfo: (mimosaConfig) =>
     reg = {}
     for f, deps of @depsRegistry
       reg[f] = []
@@ -65,7 +65,12 @@ module.exports = class RequireRegister
                 if aliasResolved
                   reg[f].push aliasResolved
 
-    reg
+    commonIndex = @requireFiles.indexOf(mimosaConfig.require.commonConfig)
+    modRequireFiles = @requireFiles
+    if commonIndex isnt -1
+      modRequireFiles.splice commonIndex, 1
+
+    {registry:reg, mainFiles:modRequireFiles}
 
   setConfig: (@config) ->
     @verify = @config.require.verify.enabled
