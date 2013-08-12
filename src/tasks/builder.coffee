@@ -88,7 +88,7 @@ class Optimizer
     else if runConfig.out
       path.join runConfig.baseUrl, runConfig.out
     else
-      path.join runConfig.baseUrl, name + "-built.js"
+      path.join runConfig.baseUrl, name.split('/').join(path.sep) + "-built.js"
 
     if typeof config.require.optimize.overrides is "function"
       config.require.optimize.overrides runConfig
