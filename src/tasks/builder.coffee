@@ -71,7 +71,7 @@ class Optimizer
       "uglify2"
 
     baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
-    name = file.replace(baseUrl + path.sep, '').replace('.js', '')
+    name = file.replace(baseUrl + path.sep, '').replace('.js', '').split(path.sep).join('/')
     runConfig.logLevel = 3                  unless runConfig.logLevel? or runConfig.logLevel is null
     runConfig.baseUrl = baseUrl             unless runConfig.baseUrl? or runConfig.baseUrl is null
 
