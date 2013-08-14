@@ -126,6 +126,21 @@ module.exports = class RequireRegister
         if dep is filePath or dep is path.join @rootJavaScriptDir, "#{filePath}.js"
           return alias
 
+  # turns full path into AMD path with alias
+  manipulatePathWithAlias: (filePath) ->
+    allAliasObjects = _.values(@aliasFiles).concat(_.values(@aliasDirectories))
+    fullObject = {}
+    for anAlias in allAliasObjects
+      fullObject = _.extend(fullObject, anAlias)
+    fullObject = _.invert(fullObject)
+
+    sortedKeys = Object.keys(fullObject).sort((a,b) -> b.length > a.length)
+    for key in sortedKeys
+      if filePath.indexOf(key) is 0
+        return filePath.replace(key, fullObject[key])
+
+    return filePath
+
   ###
   Private
   ###
