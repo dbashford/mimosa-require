@@ -136,8 +136,9 @@ module.exports = class RequireRegister
 
     sortedKeys = Object.keys(fullObject).sort((a,b) -> b.length > a.length)
     for key in sortedKeys
-      if filePath.indexOf(key) is 0
-        return filePath.replace(key, fullObject[key])
+      osPath = filePath.split('/').join(path.sep)
+      if osPath.indexOf(key) is 0
+        return osPath.replace(key, fullObject[key])
 
     return filePath
 
