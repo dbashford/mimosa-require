@@ -24,18 +24,22 @@ class Optimize
       logger.info "Requirejs optimization complete."
       callback()
 
+  _logRunConfig: (runConfig) ->
+    if logger.isDebug
+      cache = []
+      outString = JSON.stringify(runConfig, (key, value) ->
+        if (typeof value is 'object' and value isnt null)
+          return if cache.indexOf(value) isnt -1
+          cache.push(value)
+        value
+      , 2)
+      logger.debug "Config for r.js run:\n#{outString}"
+      cache = null
+
   _executeOptimize: (runConfig, callback) =>
     logger.info "Beginning r.js optimization to result in [[ #{runConfig.out} ]]"
 
-    cache = []
-    replacer = (key, value) ->
-      if typeof value == 'object' && value != null
-        return if cache.indexOf value != -1
-        cache.push value
-      return value
-    # if inferConfig is false we can get a circular reference error on this debug line
-    logger.debug "Config for r.js run:\n#{JSON.stringify(runConfig, replacer, 2)}"
-    cache = null
+    @_logRunConfig runConfig
 
     try
       requirejs.optimize runConfig, (buildResponse) =>
