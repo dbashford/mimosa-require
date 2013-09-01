@@ -39,6 +39,17 @@ exports.shims = (fileName, shims) ->
 exports.deps = (fileName, deps) ->
   setVals 'deps', fileName, deps
 
+exports.deleteForFile = (fileName) ->
+  fileName = fileName.replace config.root, ''
+  ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
+    if trackingInfo[key][fileName]? or trackingInfo[key][fileName] is null
+      delete trackingInfo[key][fileName]
+
+  if trackingInfo.requireFiles.indexOf(fileName) > -1
+    trackingInfo.requireFiles = _.without(trackingInfo.requireFiles, fileName)
+
+  writeTrackingObject()
+
 exports.aliases = (fileName, paths) ->
   setVals 'aliases', fileName, paths
 

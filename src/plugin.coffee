@@ -65,7 +65,7 @@ _clean = (config, options, next) ->
 _requireDelete = (config, options, next) ->
   hasFiles = options.files?.length > 0
   return next() unless hasFiles
-  requireRegister.remove(options.files[0].inputFileName)
+  requireRegister.remove(options.files[0].outputFileName)
   next()
 
 _requireRegister = (config, options, next) ->

@@ -107,6 +107,9 @@ module.exports = class RequireRegister
       @_logger "#{e}", 'warn'
 
   remove: (fileName) ->
+    if @config.require.tracking.enabled
+      track.deleteForFile fileName
+
     delete @depsRegistry[fileName] if @depsRegistry[fileName]?
     @_deleteForFileName(fileName, @aliasFiles)
     @_deleteForFileName(fileName, @aliasDirectories)
