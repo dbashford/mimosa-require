@@ -55,6 +55,11 @@ _clean = (config, options, next) ->
         f = path.join jsDir, f
         fs.unlinkSync f
         logger.success "Deleted file [[ #{f} ]]"
+
+  if config.require.tracking.enabled
+    if fs.existsSync config.require.tracking.pathFull
+      fs.unlinkSync config.require.tracking.pathFull
+
   next()
 
 _requireDelete = (config, options, next) ->
