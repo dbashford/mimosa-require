@@ -8,6 +8,9 @@ exports.defaults = ->
   require:
     exclude:[]
     commonConfig: "common"
+    tracking:
+      enabled: false
+      path: ".mimosa/require/tracking.json"
     verify:
       enabled: true
     optimize :
@@ -29,6 +32,17 @@ exports.placeholder = ->
                                # to a file named `common` in the root of the javascriptDir. Does
                                # not need to exist, so can be left alone if a commonConfig is not
                                # being used.
+      # tracking:              # every time mimosa starts up, mimosa-require needs to be able to
+                               # build a dependency graph for the codebase. It can do that by
+                               # processing all the files, but that means each file needs to be
+                               # processed when mimosa watch starts which slows down startup.
+                               # tracking allows mimosa-require to write interim state to the file
+                               # system so that from one mimosa run to another it can persist the
+                               # important information and not need the entire application to be
+                               # rebuilt
+        # enabled: false       # whether or not tracking is enabled
+        # path: ".mimosa/require/tracking.json" # the path to the tracking file relative to the
+                               # root of the project.
       # verify:                # settings for requirejs path verification
         # enabled: true        # Whether or not to perform verification
       # optimize :
@@ -69,12 +83,27 @@ exports.validate = (config, validators) ->
     else
       null
 
+    if validators.ifExistsIsObject(errors, "require.verify", config.require.tracking)
+      validators.ifExistsIsBoolean(errors, "require.tracking.enabled", config.require.tracking.enabled)
+      if validators.ifExistsIsString(errors, "require.tracking.path", config.require.tracking.path)
+        config.require.tracking.pathFull = path.join config.root, config.require.tracking.path
+
   if errors.length is 0
     # need to set some requirejs stuff
     if config.isOptimize and config.isMinify
       logger.info "Optimize and minify both selected, setting r.js optimize property to 'none'"
 
     # helpful shortcut
-    config.requireRegister = config.require.verify.enabled or config.isOptimize
+    config.__forceJavaScriptRecompile = config.require.verify.enabled or config.isOptimize
+
+    # manage tracking
+    if config.isWatch and config.require.tracking.enabled
+      try
+        trackingData = require config.require.tracking.pathFull
+        config.__forceJavaScriptRecompile = false
+      catch err
+        logger.debug "Problem requiring require tracking file", err
+        logger.debug "mimosa-require: javascript files need recompiling"
+        config.__forceJavaScriptRecompile = true
 
   errors

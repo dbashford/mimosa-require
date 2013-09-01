@@ -4,6 +4,8 @@ fs = require 'fs'
 _ = require 'lodash'
 logger =  require 'logmimosa'
 
+track = require './tracker'
+
 module.exports = class RequireRegister
 
   depsRegistry: {}
@@ -73,6 +75,17 @@ module.exports = class RequireRegister
     {registry:reg, mainFiles:modRequireFiles}
 
   setConfig: (@config) ->
+    if @config.require.tracking.enabled
+      track.setConfig @config
+      previousTrackingInfo = track.readTrackingObject()
+
+      @shims  = _.clone previousTrackingInfo.shims
+      @depsRegistry = _.clone previousTrackingInfo.deps
+      @aliasFiles = _.clone previousTrackingInfo.aliases
+      @mappings = _.clone previousTrackingInfo.mappings
+      @originalConfig = _.clone previousTrackingInfo.originalConfig
+      @requireFiles = _.clone previousTrackingInfo.requireFiles
+
     @verify = @config.require.verify.enabled
     unless @rootJavaScriptDir?
       @rootJavaScriptDir = path.join @config.watch.compiledDir, @config.watch.javascriptDir
@@ -160,6 +173,9 @@ module.exports = class RequireRegister
       if config or deps
         #logger.debug "[[ #{fileName} ]] has require configuration inside of it:\n#{JSON.stringify(config, null, 2)}"
         @requireFiles.push fileName unless fileName in @requireFiles
+        if @config.require.tracking.enabled
+          track.requireFiles @requireFiles
+
         if config
           @_handleConfigPaths(fileName, config.map ? null, config.paths ? null)
           @_handleShims(fileName, config.shim ? null)
@@ -180,6 +196,9 @@ module.exports = class RequireRegister
           @originalConfig[name] = _.extend @originalConfig[name], conf
         else
           @originalConfig[name] = conf
+
+        if @config.require.tracking.enabled
+          track.originalConfig @originalConfig
 
   _define: (fileName) ->
     (id, deps, funct) =>
@@ -218,6 +237,9 @@ module.exports = class RequireRegister
     @_buildTree()
 
   _handleShims: (fileName, shims) ->
+    if @config.require.tracking.enabled
+      track.shims fileName, shims
+
     if @startupComplete
       @_verifyShims(fileName, shims)
     else
@@ -281,6 +303,10 @@ module.exports = class RequireRegister
         #logger.debug "[[ #{aDep} ]] may introduce a circular dependency"
 
   _handleConfigPaths: (fileName, maps, paths) ->
+    if @config.require.tracking.enabled
+      track.aliases fileName, paths
+      track.mappings fileName, maps
+
     if @startupComplete
       @_verifyConfigForFile(fileName, maps, paths)
       # remove the dependencies for the config file as
@@ -292,6 +318,9 @@ module.exports = class RequireRegister
       @mappings[fileName] = maps
 
   _handleDeps: (fileName, deps) ->
+    if @config.require.tracking.enabled
+      track.deps fileName, deps
+
     if @startupComplete
       @_verifyFileDeps(fileName, deps)
       @_buildTree()
