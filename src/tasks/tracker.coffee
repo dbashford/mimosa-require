@@ -7,13 +7,16 @@ wrench = require 'wrench'
 _ = require 'lodash'
 logger = require 'logmimosa'
 
-trackingInfo =
-  shims:{}
-  deps:{}
-  aliases:{}
-  mappings:{}
-  originalConfig:{}
-  requireFiles:[]
+trackingInfo = {}
+
+_createEmptyTrackingInfo = ->
+  trackingInfo =
+    shims:{}
+    deps:{}
+    aliases:{}
+    mappings:{}
+    originalConfig:{}
+    requireFiles:[]
 
 config = {}
 trackingFilePath = ""
@@ -26,18 +29,18 @@ exports.requireFiles = (_requireFiles) ->
   trackingInfo.requireFiles = []
   _requireFiles.forEach (f) ->
     trackingInfo.requireFiles.push f.replace config.root, ''
-  writeTrackingObject()
+  _writeTrackingObject()
 
-setVals = (type, fName, _vals) ->
+_setVals = (type, fName, _vals) ->
   f = fName.replace config.root, ''
   trackingInfo[type][f] = _vals
-  writeTrackingObject()
+  _writeTrackingObject()
 
 exports.shims = (fileName, shims) ->
-  setVals 'shims', fileName, shims
+  _setVals 'shims', fileName, shims
 
 exports.deps = (fileName, deps) ->
-  setVals 'deps', fileName, deps
+  _setVals 'deps', fileName, deps
 
 exports.deleteForFile = (fileName) ->
   fileName = fileName.replace config.root, ''
@@ -48,22 +51,22 @@ exports.deleteForFile = (fileName) ->
   if trackingInfo.requireFiles.indexOf(fileName) > -1
     trackingInfo.requireFiles = _.without(trackingInfo.requireFiles, fileName)
 
-  writeTrackingObject()
+  _writeTrackingObject()
 
 exports.aliases = (fileName, paths) ->
-  setVals 'aliases', fileName, paths
+  _setVals 'aliases', fileName, paths
 
 exports.mappings = (fileName, maps) ->
-  setVals 'mappings', fileName, maps
+  _setVals 'mappings', fileName, maps
 
 exports.originalConfig = (_originalConfig) ->
   trackingInfo.originalConfig = _originalConfig
-  writeTrackingObject()
+  _writeTrackingObject()
 
 tryFileWrite = (fPath, data) ->
   fs.writeFileSync fPath, JSON.stringify(data, null, 2)
 
-writeTrackingObject = ->
+_writeTrackingObject = ->
   try
     tryFileWrite trackingFilePath, trackingInfo
   catch err
@@ -77,11 +80,36 @@ writeTrackingObject = ->
       catch err
         logger.error "Could not write tracking file [[ #{trackingFilePath} ]]", err
 
-setNewPathValues = (nti, name) ->
+_setNewPathValues = (nti, name) ->
   nti[name] = {}
   Object.keys(trackingInfo[name]).forEach (key) ->
     newKey = path.join config.root, key
     nti[name][newKey] = trackingInfo[name][key]
+
+_validateAndSetTrackingInfo = (ti) ->
+
+  allPaths = ti.requireFiles
+  ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
+    allPaths = allPaths.concat Object.keys(ti[key])
+
+  allPaths = _.uniq allPaths
+
+  badPaths = []
+  for p in allPaths
+    unless fs.existsSync p
+      badPaths.push p
+
+  if badPaths.length > 0
+
+    logger.info "mimosa-require has bad tracking information and will need to rebuild its tracking information by forcing a recompile of all JavaScript. Nothing to worry about, this can be caused by moving, changing or deleting files while Mimosa isn't watching."
+    if logger.isDebug
+      badPathsMsg = badPaths.join('\n')
+      logger.debug badPathsMsg
+    config.__forceJavaScriptRecompile = true
+    _createEmptyTrackingInfo()
+    trackingInfo
+  else
+    ti
 
 exports.readTrackingObject = ->
   if fs.existsSync trackingFilePath
@@ -91,11 +119,13 @@ exports.readTrackingObject = ->
 
     newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.join config.root, f
 
-    setNewPathValues newTrackingInfo, "aliases"
-    setNewPathValues newTrackingInfo, "shims"
-    setNewPathValues newTrackingInfo, "deps"
-    setNewPathValues newTrackingInfo, "mappings"
+    _setNewPathValues newTrackingInfo, "aliases"
+    _setNewPathValues newTrackingInfo, "shims"
+    _setNewPathValues newTrackingInfo, "deps"
+    _setNewPathValues newTrackingInfo, "mappings"
 
-    newTrackingInfo
+    _validateAndSetTrackingInfo newTrackingInfo
   else
     trackingInfo
+
+_createEmptyTrackingInfo()
