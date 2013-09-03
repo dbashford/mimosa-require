@@ -102,6 +102,8 @@ module.exports = class RequireRegister
     @_requirejs(requirejs)
     try
       eval(source)
+      if not @startupComplete and @config.require.tracking.enabled
+        track.fileProcessed fileName
     catch e
       @_logger "File named [[ #{fileName} ]] is not wrapped in a 'require' or 'define' function call.", "warn"
       @_logger "#{e}", 'warn'
@@ -119,6 +121,10 @@ module.exports = class RequireRegister
     return if @startupAlreadyDone
     #logger.debug "***Require registration has learned that startup has completed, verifying require registrations***"
     @startupAlreadyDone = true
+
+    if @config.require.tracking.enabled
+      track.validateTrackingInfoPostBuild @_removeFileFromCache
+
     @_verifyAll()
 
   treeBases: ->
@@ -161,6 +167,15 @@ module.exports = class RequireRegister
   ###
   Private
   ###
+
+  _removeFileFromCache: (fileName) =>
+    [@shims, @depsRegistry, @aliasFiles, @mappings].forEach (obj) ->
+      if obj[fileName]? or obj[fileName] is null
+        delete obj[fileName]
+
+    requireFileIndex = @requireFiles.indexOf fileName
+    if requireFileIndex > -1
+      @requireFiles.splice requireFileIndex, 1
 
   _logger: (message, method = 'error') ->
     if @verify
