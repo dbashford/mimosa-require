@@ -30,11 +30,11 @@ exports.setConfig = (_config) ->
 exports.requireFiles = (_requireFiles) ->
   trackingInfo.requireFiles = []
   _requireFiles.forEach (f) ->
-    trackingInfo.requireFiles.push f.replace config.root, ''
+    trackingInfo.requireFiles.push path.relative config.watch.compiledDir, f
   _writeTrackingObject()
 
 _setVals = (type, fName, _vals) ->
-  f = fName.replace config.root, ''
+  f = path.relative config.watch.compiledDir, fName
   trackingInfo[type][f] = _vals
   _writeTrackingObject()
 
@@ -85,7 +85,7 @@ _writeTrackingObject = ->
 _setNewPathValues = (nti, name) ->
   nti[name] = {}
   Object.keys(trackingInfo[name]).forEach (key) ->
-    newKey = path.resolve config.root, key
+    newKey = path.resolve config.watch.compiledDir, key
     nti[name][newKey] = trackingInfo[name][key]
 
 _validateAndSetTrackingInfo = (ti) ->
@@ -167,7 +167,7 @@ exports.readTrackingObject = ->
     newTrackingInfo =
       originalConfig: trackingInfo.originalConfig
 
-    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.resolve config.root, f
+    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.resolve config.watch.compiledDir, f
 
     _setNewPathValues newTrackingInfo, "aliases"
     _setNewPathValues newTrackingInfo, "shims"
