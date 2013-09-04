@@ -85,11 +85,10 @@ _writeTrackingObject = ->
 _setNewPathValues = (nti, name) ->
   nti[name] = {}
   Object.keys(trackingInfo[name]).forEach (key) ->
-    newKey = path.join config.root, key
+    newKey = path.resolve config.root, key
     nti[name][newKey] = trackingInfo[name][key]
 
 _validateAndSetTrackingInfo = (ti) ->
-
   allPaths = ti.requireFiles
   ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
     allPaths = allPaths.concat Object.keys(ti[key])
@@ -168,7 +167,7 @@ exports.readTrackingObject = ->
     newTrackingInfo =
       originalConfig: trackingInfo.originalConfig
 
-    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.join config.root, f
+    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.resolve config.root, f
 
     _setNewPathValues newTrackingInfo, "aliases"
     _setNewPathValues newTrackingInfo, "shims"
