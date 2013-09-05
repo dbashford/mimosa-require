@@ -75,6 +75,7 @@ _requireRegister = (config, options, next) ->
   options.files.forEach (file) ->
     outf = file.outputFileName
     if outf?.match(/\.js$/) and file.outputFileText
+      outf = path.resolve(config.watch.compiledDir, outf)
       if config.require?.excludeRegex? and outf.match config.require.excludeRegex
         logger.debug "skipping require processing of [[ #{outf} ]], file is excluded via regex"
       else if config.require.exclude.indexOf(outf) > -1

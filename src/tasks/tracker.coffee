@@ -30,11 +30,11 @@ exports.setConfig = (_config) ->
 exports.requireFiles = (_requireFiles) ->
   trackingInfo.requireFiles = []
   _requireFiles.forEach (f) ->
-    trackingInfo.requireFiles.push f.replace config.root, ''
+    trackingInfo.requireFiles.push path.relative config.watch.compiledDir, f
   _writeTrackingObject()
 
 _setVals = (type, fName, _vals) ->
-  f = fName.replace config.root, ''
+  f = path.relative config.watch.compiledDir, fName
   trackingInfo[type][f] = _vals
   _writeTrackingObject()
 
@@ -45,7 +45,7 @@ exports.deps = (fileName, deps) ->
   _setVals 'deps', fileName, deps
 
 exports.deleteForFile = (fileName) ->
-  fileName = fileName.replace config.root, ''
+  fileName = path.relative(config.watch.compiledDir, fileName)
   ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
     if trackingInfo[key][fileName]? or trackingInfo[key][fileName] is null
       delete trackingInfo[key][fileName]
@@ -85,11 +85,10 @@ _writeTrackingObject = ->
 _setNewPathValues = (nti, name) ->
   nti[name] = {}
   Object.keys(trackingInfo[name]).forEach (key) ->
-    newKey = path.join config.root, key
+    newKey = path.resolve config.watch.compiledDir, key
     nti[name][newKey] = trackingInfo[name][key]
 
 _validateAndSetTrackingInfo = (ti) ->
-
   allPaths = ti.requireFiles
   ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
     allPaths = allPaths.concat Object.keys(ti[key])
@@ -134,7 +133,7 @@ exports.validateTrackingInfoPostBuild = (reigsterRemoveCb)->
   _.difference(compiledFiles, transformedSourceFiles).filter (f) ->
     startupFilesProcessed.indexOf(f) is -1
   .map (f) ->
-    f.replace config.root, ''
+    path.relative config.watch.compiledDir, f
   .forEach (f) ->
     logger.debug "Removing [[ #{f} ]] from mimosa-require tracking information"
     _removeFileFromTracking f
@@ -168,7 +167,7 @@ exports.readTrackingObject = ->
     newTrackingInfo =
       originalConfig: trackingInfo.originalConfig
 
-    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.join config.root, f
+    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.resolve config.watch.compiledDir, f
 
     _setNewPathValues newTrackingInfo, "aliases"
     _setNewPathValues newTrackingInfo, "shims"
