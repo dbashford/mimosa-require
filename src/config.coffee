@@ -28,9 +28,9 @@ exports.placeholder = ->
                                # being considered a root level file to be optimized.
       # commonConfig: "common" # The path from 'javascriptDir' to the location of common requirejs
                                # config. This is config shared across multiple requirejs modules.
-                               # The should be or a requirejs.config({}) function call. Defaults
-                               # to a file named `common` in the root of the javascriptDir. Does
-                               # not need to exist, so can be left alone if a commonConfig is not
+                               # This should be either a require.config({}) or a requirejs.config({}) function call.
+                               # Defaults to the value `common` - referring to a file named common.js in the root of javascriptDir.
+                               # Does not need to exist, so can be left alone if a commonConfig is not
                                # being used.
       # tracking:              # every time mimosa starts up, mimosa-require needs to be able to
                                # build a dependency graph for the codebase. It can do that by
