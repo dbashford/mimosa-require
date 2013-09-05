@@ -45,7 +45,7 @@ exports.deps = (fileName, deps) ->
   _setVals 'deps', fileName, deps
 
 exports.deleteForFile = (fileName) ->
-  fileName = fileName.replace config.root, ''
+  fileName = path.relative(config.watch.compiledDir, fileName)
   ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
     if trackingInfo[key][fileName]? or trackingInfo[key][fileName] is null
       delete trackingInfo[key][fileName]
@@ -133,7 +133,7 @@ exports.validateTrackingInfoPostBuild = (reigsterRemoveCb)->
   _.difference(compiledFiles, transformedSourceFiles).filter (f) ->
     startupFilesProcessed.indexOf(f) is -1
   .map (f) ->
-    f.replace config.root, ''
+    path.relative config.watch.compiledDir, f
   .forEach (f) ->
     logger.debug "Removing [[ #{f} ]] from mimosa-require tracking information"
     _removeFileFromTracking f
