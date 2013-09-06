@@ -11,6 +11,8 @@ trackingInfo = {}
 
 startupFilesProcessed = []
 
+trackKeys = ['shims', 'deps', 'aliases', 'mappings']
+
 _createEmptyTrackingInfo = ->
   trackingInfo =
     shims:{}
@@ -30,11 +32,14 @@ exports.setConfig = (_config) ->
 exports.requireFiles = (_requireFiles) ->
   trackingInfo.requireFiles = []
   _requireFiles.forEach (f) ->
-    trackingInfo.requireFiles.push f.replace config.root, ''
+    truncPath = f.replace config.watch.compiledDir, ''
+    trackingInfo.requireFiles.push truncPath
   _writeTrackingObject()
 
 _setVals = (type, fName, _vals) ->
-  f = fName.replace config.root, ''
+  f = fName.replace(config.watch.compiledDir, '')
+  if process.platform is 'win32'
+    f = f.split(path.sep).join('/')
   trackingInfo[type][f] = _vals
   _writeTrackingObject()
 
@@ -45,8 +50,8 @@ exports.deps = (fileName, deps) ->
   _setVals 'deps', fileName, deps
 
 exports.deleteForFile = (fileName) ->
-  fileName = fileName.replace config.root, ''
-  ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
+  fileName = fileName.replace config.watch.compiledDir, ''
+  trackKeys.forEach (key) ->
     if trackingInfo[key][fileName]? or trackingInfo[key][fileName] is null
       delete trackingInfo[key][fileName]
 
@@ -82,16 +87,9 @@ _writeTrackingObject = ->
       catch err
         logger.error "Could not write tracking file [[ #{trackingFilePath} ]]", err
 
-_setNewPathValues = (nti, name) ->
-  nti[name] = {}
-  Object.keys(trackingInfo[name]).forEach (key) ->
-    newKey = path.join config.root, key
-    nti[name][newKey] = trackingInfo[name][key]
-
 _validateAndSetTrackingInfo = (ti) ->
-
   allPaths = ti.requireFiles
-  ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
+  trackKeys.forEach (key) ->
     allPaths = allPaths.concat Object.keys(ti[key])
 
   allPaths = _.uniq allPaths
@@ -102,7 +100,6 @@ _validateAndSetTrackingInfo = (ti) ->
       badPaths.push p
 
   if badPaths.length > 0
-
     logger.info "mimosa-require has bad tracking information and will need to rebuild its tracking information by forcing a recompile of all JavaScript. Nothing to worry about, this can be caused by moving, changing or deleting files while Mimosa isn't watching."
     if logger.isDebug
       badPathsMsg = badPaths.join('\n')
@@ -114,12 +111,21 @@ _validateAndSetTrackingInfo = (ti) ->
     ti
 
 _removeFileFromTracking = (f) ->
-  ['shims', 'deps', 'aliases', 'mappings'].forEach (key) ->
+  trackKeys.forEach (key) ->
     _removeFileFromObjectKey f, trackingInfo[key]
 
   requireFileIndex = trackingInfo.requireFiles.indexOf f
   if requireFileIndex > -1
     trackingInfo.requireFiles.splice requireFileIndex, 1
+
+_removeFileFromObjectKey = (f, obj) ->
+  deleteKeys = []
+  Object.keys(obj).forEach (k) ->
+    if f is k
+      deleteKeys.push k
+
+  for k in deleteKeys
+    delete obj[k]
 
 # This will get called once all the files are built to verify that all the files referenced
 # in the tracking info are valid. It checks all the files that are built against the tracking
@@ -134,20 +140,11 @@ exports.validateTrackingInfoPostBuild = (reigsterRemoveCb)->
   _.difference(compiledFiles, transformedSourceFiles).filter (f) ->
     startupFilesProcessed.indexOf(f) is -1
   .map (f) ->
-    f.replace config.root, ''
+    f.replace config.watch.compiledDir, ''
   .forEach (f) ->
     logger.debug "Removing [[ #{f} ]] from mimosa-require tracking information"
     _removeFileFromTracking f
     reigsterRemoveCb f
-
-_removeFileFromObjectKey = (f, obj) ->
-  deleteKeys = []
-  Object.keys(obj).forEach (k) ->
-    if f is k
-      deleteKeys.push k
-
-  for k in deleteKeys
-    delete obj[k]
 
 _getFiles = (config, exts,  dir) ->
   wrench.readdirSyncRecursive(dir)
@@ -159,8 +156,11 @@ _getFiles = (config, exts,  dir) ->
       ext = path.extname(f).substring(1)
       exts.indexOf(ext) > -1
 
-exports.fileProcessed = (f) ->
-  startupFilesProcessed.push f
+_setNewPathValues = (nti, name) ->
+  nti[name] = {}
+  Object.keys(trackingInfo[name]).forEach (key) ->
+    newKey = path.join(config.watch.compiledDir, key).split('/').join(path.sep)
+    nti[name][newKey] = trackingInfo[name][key]
 
 exports.readTrackingObject = ->
   if fs.existsSync trackingFilePath
@@ -168,15 +168,21 @@ exports.readTrackingObject = ->
     newTrackingInfo =
       originalConfig: trackingInfo.originalConfig
 
-    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) -> path.join config.root, f
+    newTrackingInfo.requireFiles = trackingInfo.requireFiles.map (f) ->
+      p = path.join(config.watch.compiledDir, f)
+      if process.platform is 'win32'
+        p.split('/').join(path.sep)
+      else
+        p
 
-    _setNewPathValues newTrackingInfo, "aliases"
-    _setNewPathValues newTrackingInfo, "shims"
-    _setNewPathValues newTrackingInfo, "deps"
-    _setNewPathValues newTrackingInfo, "mappings"
+    trackKeys.forEach (key) ->
+      _setNewPathValues newTrackingInfo, key
 
     _validateAndSetTrackingInfo newTrackingInfo
   else
     trackingInfo
+
+exports.fileProcessed = (f) ->
+  startupFilesProcessed.push f
 
 _createEmptyTrackingInfo()
