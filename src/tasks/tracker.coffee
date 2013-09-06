@@ -31,6 +31,7 @@ exports.setConfig = (_config) ->
 
 exports.requireFiles = (_requireFiles) ->
   trackingInfo.requireFiles = []
+  _requireFiles.sort()
   _requireFiles.forEach (f) ->
     truncPath = f.replace config.watch.compiledDir, ''
     trackingInfo.requireFiles.push truncPath
@@ -41,6 +42,11 @@ _setVals = (type, fName, _vals) ->
   if process.platform is 'win32'
     f = f.split(path.sep).join('/')
   trackingInfo[type][f] = _vals
+
+  newObj  = {}
+  _(trackingInfo[type]).keys().sort().map (f) -> newObj[f] = trackingInfo[type][f]
+  trackingInfo[type] = newObj
+
   _writeTrackingObject()
 
 exports.shims = (fileName, shims) ->
