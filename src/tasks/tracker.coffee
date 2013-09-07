@@ -29,18 +29,21 @@ exports.setConfig = (_config) ->
   config = _config
   trackingFilePath = config.require.tracking.pathFull
 
+_handlePathPreWrite = (f) ->
+  truncPath = f.replace config.watch.compiledDir, ''
+  if process.platform is 'win32'
+     truncPath.split(path.sep).join('/')
+
 exports.requireFiles = (_requireFiles) ->
   trackingInfo.requireFiles = []
   _requireFiles.sort()
-  _requireFiles.forEach (f) ->
-    truncPath = f.replace config.watch.compiledDir, ''
-    trackingInfo.requireFiles.push truncPath
+  _requireFiles.forEach (fName) ->
+    f = _handlePathPreWrite fName
+    trackingInfo.requireFiles.push f
   _writeTrackingObject()
 
 _setVals = (type, fName, _vals) ->
-  f = fName.replace(config.watch.compiledDir, '')
-  if process.platform is 'win32'
-    f = f.split(path.sep).join('/')
+  f = _handlePathPreWrite fName
   trackingInfo[type][f] = _vals
 
   newObj  = {}
@@ -55,6 +58,16 @@ exports.shims = (fileName, shims) ->
 exports.deps = (fileName, deps) ->
   _setVals 'deps', fileName, deps
 
+exports.aliases = (fileName, paths) ->
+  _setVals 'aliases', fileName, paths
+
+exports.mappings = (fileName, maps) ->
+  _setVals 'mappings', fileName, maps
+
+exports.originalConfig = (_originalConfig) ->
+  trackingInfo.originalConfig = _originalConfig
+  _writeTrackingObject()
+
 exports.deleteForFile = (fileName) ->
   fileName = fileName.replace config.watch.compiledDir, ''
   trackKeys.forEach (key) ->
@@ -66,20 +79,12 @@ exports.deleteForFile = (fileName) ->
 
   _writeTrackingObject()
 
-exports.aliases = (fileName, paths) ->
-  _setVals 'aliases', fileName, paths
-
-exports.mappings = (fileName, maps) ->
-  _setVals 'mappings', fileName, maps
-
-exports.originalConfig = (_originalConfig) ->
-  trackingInfo.originalConfig = _originalConfig
-  _writeTrackingObject()
-
 _tryFileWrite = (fPath, data) ->
   fs.writeFileSync fPath, JSON.stringify(data, null, 2)
 
 _writeTrackingObject = ->
+  # don't go looking to verify the folder is there every time
+  # just catch it the one time it is not
   try
     _tryFileWrite trackingFilePath, trackingInfo
   catch err
