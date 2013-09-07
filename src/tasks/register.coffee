@@ -386,7 +386,7 @@ module.exports = class RequireRegister
           continue
 
         unless fs.existsSync fullDepPath
-          alias = @_findAlias(aliasPath, @aliasFiles)
+          fullDepPath = @_findAlias(aliasPath, @aliasFiles)
 
         if alias
           #logger.debug "Found mapped dependency [[ #{alias} ]] at [[ #{fullDepPath} ]]"
