@@ -31,6 +31,10 @@ exports.registration = (config, register) ->
       register ['add','update','remove'], 'afterOptimize',  _removeCombined,         [e.javascript..., e.template...]
       register ['postBuild'],             'optimize',       _removeCombined
 
+      if config.require.tracking.enabled
+        if fs.existsSync config.require.tracking.pathFull
+          fs.unlinkSync config.require.tracking.pathFull
+
   requireRegister.setConfig(config)
 
 exports.aliasForPath = (libPath) ->
