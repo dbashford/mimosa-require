@@ -33,6 +33,7 @@ _handlePathPreWrite = (f) ->
   truncPath = f.replace config.watch.compiledDir, ''
   if process.platform is 'win32'
      truncPath.split(path.sep).join('/')
+  truncPath
 
 exports.requireFiles = (_requireFiles) ->
   trackingInfo.requireFiles = []
