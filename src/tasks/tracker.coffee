@@ -21,6 +21,7 @@ _createEmptyTrackingInfo = ->
     mappings:{}
     originalConfig:{}
     requireFiles:[]
+    packages:[]
 
 config = {}
 trackingFilePath = ""
@@ -32,7 +33,8 @@ exports.setConfig = (_config) ->
 _handlePathPreWrite = (f) ->
   truncPath = f.replace config.watch.compiledDir, ''
   if process.platform is 'win32'
-     truncPath.split(path.sep).join('/')
+    truncPath = truncPath.split(path.sep).join('/')
+
   truncPath
 
 exports.requireFiles = (_requireFiles) ->
@@ -53,17 +55,9 @@ _setVals = (type, fName, _vals) ->
 
   _writeTrackingObject()
 
-exports.shims = (fileName, shims) ->
-  _setVals 'shims', fileName, shims
-
-exports.deps = (fileName, deps) ->
-  _setVals 'deps', fileName, deps
-
-exports.aliases = (fileName, paths) ->
-  _setVals 'aliases', fileName, paths
-
-exports.mappings = (fileName, maps) ->
-  _setVals 'mappings', fileName, maps
+['shims', 'deps', 'aliases', 'mappings', 'packages'].forEach (cfgKey) ->
+  exports[cfgKey] = (fileName, cfgSegment) ->
+    _setVals cfgKey, fileName, cfgSegment
 
 exports.originalConfig = (_originalConfig) ->
   trackingInfo.originalConfig = _originalConfig
