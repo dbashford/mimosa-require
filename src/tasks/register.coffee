@@ -408,9 +408,9 @@ module.exports = class RequireRegister
     logger.debug "Verifying [[ #{fileName} ]] packages:\n#{JSON.stringify(packages)}"
 
     for pkg in packages
-      pkgFullDirPath = path.join(this.rootJavaScriptDir, pkg.location)
-      if (fs.existsSync(pkgFullDirPath))
-        if (fs.statSync(pkgFullDirPath).isDirectory())
+      pkgFullDirPath = path.join(@rootJavaScriptDir, pkg.location)
+      if fs.existsSync(pkgFullDirPath)
+        if fs.statSync(pkgFullDirPath).isDirectory()
           @aliasDirectories[fileName][pkg.name] = pkgFullDirPath
         else
           @_logger "location for package [[ #{pkg.name} ]] was found but is not a directory"
@@ -424,27 +424,24 @@ module.exports = class RequireRegister
         @_logger "Mapping inside file [[ #{fileName} ]], for module [[ #{module} ]] has path that cannot be found [[ #{aliasPath} ]]."
 
   _normalizeConfigPackages:(packages) ->
+    unless packages? and Array.isArray(packages)
+      #logger.debug "Packages defined in unknown way (expected an array) - skipping packages object of type : [[ #{typeof packages} ]]"
+      return null #return null if this is something we can't understand
+
+    packages = _.filter packages, (pkg) ->
+      return true if _.isString(pkg) or _.isObject(pkg)
+      logger.debug "Package defined in unknown way, skipping pkg object of type : [[ #{typeof pkg} ]]"
+
     pkgFormat = { name: '', location: '', main: 'main'}
-
-    if packages? and Array.isArray(packages)
-      packages = _.filter packages, (pkg) ->
-        return true if _.isString(pkg) or _.isObject(pkg)
-        logger.debug "Package defined in unknown way, skipping pkg object of type : [[ #{typeof pkg} ]]"
-
-      packages = _.map packages, (pkg) ->
-        return _.extend({}, pkgFormat, { name: pkg }) if _.isString(pkg)
-        _.extend({}, pkgFormat, pkg)
-
-      return packages
-
-    logger.debug "Packages defined in unknown way (expected an array) - skipping packages object of type : [[ #{typeof packages} ]]"
-    null #return null if this is something we can't understand
+    _.map packages, (pkg) ->
+      if _.isString(pkg)
+        return _.extend({}, pkgFormat, { name: pkg })
+      _.extend({}, pkgFormat, pkg)
 
   _resolvePackagePath: (fileName, pkg, alias) ->
     #logger.debug "Resolving alias [[ #{alias} ]] for package:\n[[ #{JSON.stringify(pkg, null, 2)} ]]\n in file [[#{fileName}]]"
     relativePath = path.join pkg.location, pkg.main
-    pkgPath = @_resolvePath(fileName, relativePath)
-    return pkgPath
+    @_resolvePath(fileName, relativePath)
 
   _isWebPath: (filePath) ->
     @webPathRegex.test filePath
