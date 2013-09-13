@@ -14,6 +14,7 @@ module.exports = class RequireRegister
   requireFiles: []
   tree: {}
   mappings: {}
+  packages: {}
   shims: {}
   originalConfig: {}
 
@@ -85,6 +86,7 @@ module.exports = class RequireRegister
       @mappings = _.clone previousTrackingInfo.mappings
       @originalConfig = _.clone previousTrackingInfo.originalConfig
       @requireFiles = _.clone previousTrackingInfo.requireFiles
+      @packages = _.clone previousTrackingInfo.packages
 
     @verify = @config.require.verify.enabled
     unless @rootJavaScriptDir?
@@ -195,7 +197,7 @@ module.exports = class RequireRegister
           track.requireFiles @requireFiles
 
         if config
-          @_handleConfigPaths(fileName, config.map ? null, config.paths ? null)
+          @_handleConfigPaths(fileName, config.map ? null, config.paths ? null, config.packages ? null)
           @_handleShims(fileName, config.shim ? null)
 
       if config?
@@ -207,7 +209,7 @@ module.exports = class RequireRegister
       @_handleDeps(fileName, deps)
 
   _mergeOriginalConfig: (config) ->
-    ["shim", "paths", "map", "config"].forEach (name) =>
+    ["shim", "paths", "map", "packages", "config"].forEach (name) =>
       if config[name]?
         conf = _.clone config[name]
         if @originalConfig[name]?
@@ -320,18 +322,22 @@ module.exports = class RequireRegister
       #else
         #logger.debug "[[ #{aDep} ]] may introduce a circular dependency"
 
-  _handleConfigPaths: (fileName, maps, paths) ->
+  _handleConfigPaths: (fileName, maps, paths, packages) ->
+    packages = @_normalizeConfigPackages(packages)
+
     if @config.require.tracking.enabled
       track.aliases fileName, paths
       track.mappings fileName, maps
+      track.packages fileName, packages
 
     if @startupComplete
-      @_verifyConfigForFile(fileName, maps, paths)
+      @_verifyConfigForFile(fileName, maps, paths, packages)
       # remove the dependencies for the config file as
       # they'll get checked after the config paths are checked in
       @depsRegistry[fileName] = []
       @_verifyFileDeps(file, deps) for file, deps of @depsRegistry
     else
+      @packages[fileName] = packages
       @aliasFiles[fileName] = paths
       @mappings[fileName] = maps
 
@@ -345,9 +351,11 @@ module.exports = class RequireRegister
     else
       @depsRegistry[fileName] = deps
 
-  _verifyConfigForFile: (fileName, maps, paths) ->
+  _verifyConfigForFile: (fileName, maps, paths, packages) ->
     # if nothing passed in, then is verify all
-    maps = maps ? @mappings[fileName]
+    maps ?= @mappings[fileName]
+    packages ?= @packages[fileName]
+
     paths = if paths
       paths
     else
@@ -360,6 +368,7 @@ module.exports = class RequireRegister
     @aliasDirectories[fileName] = {}
     @_verifyConfigPath(fileName, alias, aliasPath) for alias, aliasPath of paths
     @_verifyConfigMappings(fileName, maps)
+    @_verifyConfigPackages(fileName, packages)
 
   _verifyConfigMappings: (fileName, maps) ->
     #logger.debug "Verifying [[ #{fileName} ]] maps:\n#{JSON.stringify(maps, null, 2)}"
@@ -394,6 +403,48 @@ module.exports = class RequireRegister
           maps[module][alias] = fullDepPath
         else
           @_logger "Mapping inside file [[ #{fileName} ]], for module [[ #{module} ]] has path that cannot be found [[ #{aliasPath} ]]."
+
+  _verifyConfigPackages: (fileName, packages) ->
+    logger.debug "Verifying [[ #{fileName} ]] packages:\n#{JSON.stringify(packages)}"
+
+    for pkg in packages
+      pkgFullDirPath = path.join(this.rootJavaScriptDir, pkg.location)
+      if (fs.existsSync(pkgFullDirPath))
+        if (fs.statSync(pkgFullDirPath).isDirectory())
+          @aliasDirectories[fileName][pkg.name] = pkgFullDirPath
+        else
+          @_logger "location for package [[ #{pkg.name} ]] was found but is not a directory"
+      else
+        @_logger "location for package [[ #{pkg.name} ]] could not be found"
+
+      fullDepPath = @_resolvePackagePath(fileName, pkg)
+      if fs.existsSync fullDepPath
+        @aliasFiles[fileName][pkg.name] = fullDepPath
+      else
+        @_logger "Mapping inside file [[ #{fileName} ]], for module [[ #{module} ]] has path that cannot be found [[ #{aliasPath} ]]."
+
+  _normalizeConfigPackages:(packages) ->
+    pkgFormat = { name: '', location: '', main: 'main'}
+
+    if packages? and Array.isArray(packages)
+      packages = _.filter packages, (pkg) ->
+        return true if _.isString(pkg) or _.isObject(pkg)
+        logger.debug "Package defined in unknown way, skipping pkg object of type : [[ #{typeof pkg} ]]"
+
+      packages = _.map packages, (pkg) ->
+        return _.extend({}, pkgFormat, { name: pkg }) if _.isString(pkg)
+        _.extend({}, pkgFormat, pkg)
+
+      return packages
+
+    logger.debug "Packages defined in unknown way (expected an array) - skipping packages object of type : [[ #{typeof packages} ]]"
+    null #return null if this is something we can't understand
+
+  _resolvePackagePath: (fileName, pkg, alias) ->
+    #logger.debug "Resolving alias [[ #{alias} ]] for package:\n[[ #{JSON.stringify(pkg, null, 2)} ]]\n in file [[#{fileName}]]"
+    relativePath = path.join pkg.location, pkg.main
+    pkgPath = @_resolvePath(fileName, relativePath)
+    return pkgPath
 
   _isWebPath: (filePath) ->
     @webPathRegex.test filePath
