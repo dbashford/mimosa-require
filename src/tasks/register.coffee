@@ -171,7 +171,7 @@ module.exports = class RequireRegister
   ###
 
   _removeFileFromCache: (fileName) =>
-    [@shims, @depsRegistry, @aliasFiles, @mappings].forEach (obj) ->
+    [@shims, @depsRegistry, @aliasFiles, @mappings, @packages].forEach (obj) ->
       if obj[fileName]? or obj[fileName] is null
         delete obj[fileName]
 
@@ -372,7 +372,7 @@ module.exports = class RequireRegister
 
   _verifyConfigMappings: (fileName, maps) ->
     #logger.debug "Verifying [[ #{fileName} ]] maps:\n#{JSON.stringify(maps, null, 2)}"
-    # rewrite module paths to full paths
+
     for module, mappings of maps
       if module isnt '*'
         fullDepPath = @_resolvePath(fileName, module)
@@ -405,11 +405,13 @@ module.exports = class RequireRegister
           @_logger "Mapping inside file [[ #{fileName} ]], for module [[ #{module} ]] has path that cannot be found [[ #{aliasPath} ]]."
 
   _verifyConfigPackages: (fileName, packages) ->
-    logger.debug "Verifying [[ #{fileName} ]] packages:\n#{JSON.stringify(packages)}"
+    # logger.debug "Verifying [[ #{fileName} ]] packages:\n#{JSON.stringify(packages)}"
+
+    return unless packages
 
     for pkg in packages
       pkgFullDirPath = path.join(@rootJavaScriptDir, pkg.location)
-      if fs.existsSync(pkgFullDirPath)
+      if fs.existsSync pkgFullDirPath
         if fs.statSync(pkgFullDirPath).isDirectory()
           @aliasDirectories[fileName][pkg.name] = pkgFullDirPath
         else
