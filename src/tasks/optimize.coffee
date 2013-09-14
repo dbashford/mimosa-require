@@ -37,22 +37,50 @@ class Optimize
       cache = null
 
   _executeOptimize: (runConfig, callback) =>
-    logger.info "Beginning r.js optimization to result in [[ #{runConfig.out} ]]"
+    if runConfig.out
+      logger.info "Beginning r.js optimization to result in [[ #{runConfig.out} ]]"
+    else
+      logger.info "Beginning r.js optimization"
 
     @_logRunConfig runConfig
 
     try
       requirejs.optimize runConfig, (buildResponse) =>
-        reportLines = buildResponse.split("\n")
-        for reportLine, i in reportLines
-          if reportLine.indexOf('---') is 0
-            runConfig.filesUsed = reportLines.splice(i + 1, reportLines.length - (i + 2))
-            break
-
-        logger.success "The compiled file [[ #{runConfig.out} ]] is ready for use.", true
+        if runConfig.out
+          @_reportSingleFileOutput runConfig, buildResponse
+        else if runConfig.dir
+          @_reportMultiFileOutput runConfig
+        else
+          logger.debug "Unexpected exit, not .out, not .dir."
         callback()
     catch err
       logger.error "Error occured inside r.js optimizer, error is as follows... #{err}"
       callback()
+
+  _reportSingleFileOutput: (runConfig, buildResponse)->
+    reportLines = buildResponse.split("\n")
+    builtFile = undefined
+    for reportLine, i in reportLines
+      if reportLine.indexOf('---') is 0
+        runConfig.filesUsed = reportLines.splice(i + 1, reportLines.length - (i + 2)).filter (used) ->
+          used isnt builtFile
+        break
+      else
+        builtFile = reportLine
+
+    logger.success "The compiled file [[ #{builtFile} ]] is ready for use.", true
+
+  _reportMultiFileOutput: (runConfig) ->
+    buildTxtPath = path.join runConfig.dir, "build.txt"
+    if fs.existsSync buildTxtPath
+      buildResponse = fs.readFileSync buildTxtPath, "ascii"
+      filesBuiltReportLines = buildResponse.split('\n\n')
+      filesUsed = []
+      for f in filesBuiltReportLines
+        @_reportSingleFileOutput runConfig, f
+        filesUsed = filesUsed.concat runConfig.filesUsed
+      runConfig.filesUsed = filesUsed.map (f) -> path.join runConfig.dir, f
+    else
+      logger.info "Cannot locate build.txt for post r.js run cleanup purposes."
 
 exports.execute = new Optimize().execute
