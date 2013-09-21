@@ -9,7 +9,7 @@ exports.defaults = ->
     exclude:[]
     commonConfig: "common"
     tracking:
-      enabled: false
+      enabled: true
       path: ".mimosa/require/tracking.json"
     verify:
       enabled: true
@@ -40,7 +40,7 @@ exports.placeholder = ->
                                # system so that from one mimosa run to another it can persist the
                                # important information and not need the entire application to be
                                # rebuilt
-        # enabled: false       # whether or not tracking is enabled
+        # enabled: true       # whether or not tracking is enabled
         # path: ".mimosa/require/tracking.json" # the path to the tracking file relative to the
                                # root of the project.
       # verify:                # settings for requirejs path verification
