@@ -15,6 +15,7 @@ exports.defaults = ->
       enabled: true
     optimize :
       inferConfig:true
+      modules:null
       overrides:{}
 
 exports.placeholder = ->
@@ -51,6 +52,9 @@ exports.placeholder = ->
                                # provide your config in the overrides section. See here
                                # https://github.com/dbashford/mimosa#requirejs-optimizer-defaults
                                # to see what the defaults are.
+        # modules:             # If using a modules config, place it here. mimosa-require will use
+                               # the modules config directly, but also base many other r.js config
+                               # options based on a modules setup instead of a single file setup.
         # overrides:           # Optimization configuration and Mimosa overrides. If you need to
                                # make tweaks uncomment this line and add the r.js config
                                # (http://requirejs.org/docs/optimization.html#options) as new
@@ -72,6 +76,10 @@ exports.validate = (config, validators) ->
       validators.ifExistsIsBoolean(errors, "require.verify.enabled", config.require.verify.enabled)
 
     if validators.ifExistsIsObject(errors, "require.optimize", config.require.optimize)
+      if validators.ifExistsIsArrayOfObjects(errors, "require.optimize.modules", config.require.optimize.modules)
+        if config.require.optimize.modules
+          unless config.require.optimize.modules.length > 0
+            errors.push "require.optimize.modules array, when provided, cannot be empty."
       validators.ifExistsIsBoolean(errors, "require.optimize.inferConfig", config.require.optimize.inferConfig)
       if config.require.optimize.overrides?
         obj = config.require.optimize.overrides

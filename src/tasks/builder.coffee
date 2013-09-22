@@ -70,25 +70,34 @@ class Optimizer
     else
       "uglify2"
 
+    configFile = if fs.existsSync config.require.commonConfig then config.require.commonConfig else file
     baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
-    name = file.replace(baseUrl + path.sep, '').replace('.js', '').split(path.sep).join('/')
+
     runConfig.logLevel = 3                  unless runConfig.logLevel? or runConfig.logLevel is null
     runConfig.baseUrl = baseUrl             unless runConfig.baseUrl? or runConfig.baseUrl is null
-
-    configFile = if fs.existsSync config.require.commonConfig then config.require.commonConfig else file
+    runConfig.wrap = true                   unless runConfig.wrap? or runConfig.wrap is null
+    runConfig.findNestedDependencies = true unless runConfig.findNestedDependencies? or runConfig.findNestedDependencies is null
     runConfig.mainConfigFile = configFile   unless runConfig.mainConfigFile? or runConfig.mainConfigFile is null
 
-    runConfig.findNestedDependencies = true unless runConfig.findNestedDependencies? or runConfig.findNestedDependencies is null
-    runConfig.include = [name]              unless runConfig.include? or runConfig.include is null
-    runConfig.insertRequire = [name]        unless runConfig.insertRequire? or runConfig.insertRequire is null
-    runConfig.wrap = true                   unless runConfig.wrap? or runConfig.wrap is null
-    runConfig.name = 'almond'               unless runConfig.name? or runConfig.name is null
-    runConfig.out = if runConfig.out is null
-      undefined
-    else if runConfig.out
-      path.join runConfig.baseUrl, runConfig.out
+    # When using modules, have different default config
+    # need dir instead out out, need to keep build dir or r.js removes it
+    if config.require.optimize.modules
+      runConfig.dir = path.relative config.root, config.watch.compiledJavascriptDir
+      runConfig.modules = _.clone config.require.optimize.modules
+      runConfig.keepBuildDir = true
     else
-      path.join runConfig.baseUrl, name.split('/').join(path.sep) + "-built.js"
+
+      name = file.replace(baseUrl + path.sep, '').replace('.js', '').split(path.sep).join('/')
+      runConfig.include = [name]              unless runConfig.include? or runConfig.include is null
+      runConfig.insertRequire = [name]        unless runConfig.insertRequire? or runConfig.insertRequire is null
+      runConfig.name = 'almond'               unless runConfig.name? or runConfig.name is null
+      runConfig.out = if runConfig.out is null
+        undefined
+      else if runConfig.out
+        path.join runConfig.baseUrl, runConfig.out
+      else
+        path.join runConfig.baseUrl, name.split('/').join(path.sep) + "-built.js"
+
 
     if typeof config.require.optimize.overrides is "function"
       config.require.optimize.overrides runConfig
