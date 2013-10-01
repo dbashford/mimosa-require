@@ -456,6 +456,9 @@ module.exports = class RequireRegister
         @_verifyConfigPath(fileName, alias, aPath)
       return
 
+    unless typeof aliasPath is "string"
+      return @_logger "Expected string in paths config and instead got this: [[ #{JSON.stringify(aliasPath)} ]] for file [[ #{fileName} ]]"
+
     # mapped paths are ok
     if aliasPath.indexOf("MAPPED") is 0
       return #logger.debug "Is mapped path [[ #{aliasPath} ]]"
