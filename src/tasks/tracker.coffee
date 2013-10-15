@@ -79,7 +79,7 @@ _writeTrackingObject = ->
     _tryFileWrite trackingFilePath, trackingInfo
   catch err
     dir = path.dirname trackingFilePath
-    if fs.exists dir
+    if fs.existsSync dir
       logger.error "Could not write tracking file [[ #{trackingFilePath} ]]", err
     else
       wrench.mkdirSyncRecursive dir, 0o0777
