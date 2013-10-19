@@ -54,7 +54,9 @@ _clean = (config, options, next) ->
   if fs.existsSync jsDir
     files = wrench.readdirSyncRecursive(jsDir)
       .filter (f) ->
-        /-built\.js(\.map|\.src)?$/.test(f) or /almond\.js$/.test(f)
+        keep = /-built\.js(\.map|\.src)?$/.test(f) or /almond\.js(\.map|\.src\.js)?/.test(f)
+        if config.require.optimize.modules
+          keep = keep or /build\.txt$/.test(f) or /\.js\.src\.js$/.test(f) or /\.js\.map$/.test(f)
       .map (f) ->
         f = path.join jsDir, f
         fs.unlinkSync f

@@ -98,11 +98,10 @@ class Optimizer
       else
         path.join runConfig.baseUrl, name.split('/').join(path.sep) + "-built.js"
 
-
     if typeof config.require.optimize.overrides is "function"
       config.require.optimize.overrides runConfig
 
-    if !config.isBuild and runConfig.optimize is "uglify2"
+    if not config.isBuild and runConfig.optimize is "uglify2"
       runConfig.generateSourceMaps = true       unless runConfig.generateSourceMaps?
       runConfig.preserveLicenseComments = false unless runConfig.preserveLicenseComments?
 
