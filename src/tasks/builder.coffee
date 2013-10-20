@@ -8,8 +8,6 @@ logger =  require 'logmimosa'
 
 requireRegister = require './register'
 
-firstRun = true
-
 class Optimizer
 
   buildRunConfig: (config, fileName, doneCallback) =>
