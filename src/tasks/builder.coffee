@@ -106,6 +106,9 @@ class Optimizer
       unless runConfig.generateSourceMaps?
         runConfig.generateSourceMaps = false
         logger.info "Disabling source maps for module-based r.js compiles. If you need source maps, use the overrides configuration. module-based source maps will only work with the initial compile and will not work with recompiles."
+      else
+        if runConfig.generateSourceMaps
+          logger.warn "Source maps force enabled during 'mimosa watch' for modules optimization. When modules + source maps + watch used, optimization can only successfully be run once. Subsequent optimization runs during this 'mimosa watch' will likely result in bad output."
 
     if not config.isBuild and runConfig.optimize is "uglify2"
       runConfig.generateSourceMaps = true       unless runConfig.generateSourceMaps?
