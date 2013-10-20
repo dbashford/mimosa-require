@@ -75,7 +75,7 @@ _clean = (config, options, next) ->
       fs.unlinkSync config.require.tracking.pathFull
 
   if fs.existsSync config.require.optimize.moduleCachingPathFull
-    fs.rmdirSync config.require.optimize.moduleCachingPathFull
+    wrench.rmdirSyncRecursive config.require.optimize.moduleCachingPathFull
 
   next()
 
