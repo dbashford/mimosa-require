@@ -10,6 +10,7 @@ _ = require 'lodash'
 requireRegister = require './tasks/register'
 optimizer = require './tasks/optimize'
 builder = require './tasks/builder'
+moduleCacher = require './tasks/caching'
 
 exports.registration = (config, register) ->
 
@@ -31,9 +32,16 @@ exports.registration = (config, register) ->
       register ['add','update','remove'], 'afterOptimize',  _removeCombined,         [e.javascript..., e.template...]
       register ['postBuild'],             'optimize',       _removeCombined
 
+  # remove the tracking file
   if config.isBuild and config.require.tracking.enabled
     if fs.existsSync config.require.tracking.pathFull
       fs.unlinkSync config.require.tracking.pathFull
+
+  # If watching, and optimizing, and using modules, then need to cache the unmodified
+  # files before r.js jacks them up, and then manage while watching
+  if config.isWatch and config.isOptimize and config.require.optimize.modules
+    register ['postBuild'], 'beforeOptimize', moduleCacher.cache
+    register ['update'],    'beforeOptimize', moduleCacher.checkCache
 
   requireRegister.setConfig(config)
 
@@ -65,6 +73,9 @@ _clean = (config, options, next) ->
   if config.require.tracking.enabled
     if fs.existsSync config.require.tracking.pathFull
       fs.unlinkSync config.require.tracking.pathFull
+
+  if fs.existsSync config.require.optimize.moduleCachingPathFull
+    fs.rmdirSync config.require.optimize.moduleCachingPathFull
 
   next()
 

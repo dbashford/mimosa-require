@@ -8,6 +8,8 @@ logger =  require 'logmimosa'
 
 requireRegister = require './register'
 
+firstRun = true
+
 class Optimizer
 
   buildRunConfig: (config, fileName, doneCallback) =>
@@ -83,10 +85,9 @@ class Optimizer
     # need dir instead out out, need to keep build dir or r.js removes it
     if config.require.optimize.modules
       runConfig.dir = path.relative config.root, config.watch.compiledJavascriptDir
-      runConfig.modules = _.clone config.require.optimize.modules
+      runConfig.modules = _.clone config.require.optimize.modules, true
       runConfig.keepBuildDir = true
     else
-
       name = file.replace(baseUrl + path.sep, '').replace('.js', '').split(path.sep).join('/')
       runConfig.include = [name]              unless runConfig.include? or runConfig.include is null
       runConfig.insertRequire = [name]        unless runConfig.insertRequire? or runConfig.insertRequire is null
@@ -100,6 +101,11 @@ class Optimizer
 
     if typeof config.require.optimize.overrides is "function"
       config.require.optimize.overrides runConfig
+
+    if config.require.optimize.modules and config.isWatch
+      unless runConfig.generateSourceMaps?
+        runConfig.generateSourceMaps = false
+        logger.info "Disabling source maps for module-based r.js compiles. If you need source maps, use the overrides configuration. module-based source maps will only work with the initial compile and will not work with recompiles."
 
     if not config.isBuild and runConfig.optimize is "uglify2"
       runConfig.generateSourceMaps = true       unless runConfig.generateSourceMaps?

@@ -14,6 +14,7 @@ exports.defaults = ->
     verify:
       enabled: true
     optimize :
+      moduleCachingPath: ".mimosa/require/moduleCaching"
       inferConfig:true
       modules:null
       overrides:{}
@@ -55,6 +56,10 @@ exports.placeholder = ->
         # modules:             # If using a modules config, place it here. mimosa-require will use
                                # the modules config directly, but also base many other r.js config
                                # options based on a modules setup instead of a single file setup.
+        # moduleCachingPath: ".mimosa/require/moduleCaching" # Only valid if using modules. This
+                               # path is where pristine root module files are kept in between r.js
+                               # runs. This cache allows you to keep "mimosa watch" running while
+                               # building and rebuilding your application.
         # overrides:           # Optimization configuration and Mimosa overrides. If you need to
                                # make tweaks uncomment this line and add the r.js config
                                # (http://requirejs.org/docs/optimization.html#options) as new
@@ -76,6 +81,9 @@ exports.validate = (config, validators) ->
       validators.ifExistsIsBoolean(errors, "require.verify.enabled", config.require.verify.enabled)
 
     if validators.ifExistsIsObject(errors, "require.optimize", config.require.optimize)
+      if validators.ifExistsIsString(errors, "require.optimize.moduleCachingPath", config.require.optimize.moduleCachingPath)
+        config.require.optimize.moduleCachingPathFull = path.join config.root, config.require.optimize.moduleCachingPath
+
       if validators.ifExistsIsArrayOfObjects(errors, "require.optimize.modules", config.require.optimize.modules)
         if config.require.optimize.modules
           unless config.require.optimize.modules.length > 0
