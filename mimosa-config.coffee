@@ -1,11 +1,10 @@
 exports.config =
-  modules: ["lint"]
+  modules: ["jshint"]
   watch:
     sourceDir: "src"
     compiledDir: "lib"
     javascriptDir: null
-  lint:
+  jshint:
     exclude:[/almond.js/]
     rules:
-      javascript:
-        node: true
+      node: true
