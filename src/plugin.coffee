@@ -65,6 +65,7 @@ _clean = (config, options, next) ->
         keep = /-built\.js(\.map|\.src)?$/.test(f) or /almond\.js(\.map|\.src\.js)?/.test(f)
         if config.require.optimize.modules
           keep = keep or /build\.txt$/.test(f) or /\.js\.src\.js$/.test(f) or /\.js\.map$/.test(f)
+        keep
       .map (f) ->
         f = path.join jsDir, f
         fs.unlinkSync f
