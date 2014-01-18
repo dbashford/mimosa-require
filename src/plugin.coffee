@@ -111,6 +111,7 @@ _buildOptimizeConfigsFile = (config, options, next) ->
   done = (runConfigs) ->
     if runConfigs
       allRunConfigs = allRunConfigs.concat runConfigs
+
     if options.files.length is ++filesDone
       if allRunConfigs.length > 0
         options.runConfigs = allRunConfigs
@@ -120,6 +121,8 @@ _buildOptimizeConfigsFile = (config, options, next) ->
   options.files.forEach (file) ->
     if file.outputFileName and file.outputFileText
       builder.buildRunConfig config, file.outputFileName, done
+    else
+      done()
 
 _buildOptimizeConfigs = (config, options, next) ->
   builder.buildRunConfig config, null, (runConfigs) ->
