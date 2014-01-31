@@ -64,11 +64,13 @@ class Optimizer
       _.clone(config.require.optimize.overrides, true)
     else
       {}
+    unless runConfig.optimize? or runConfig.optimize is null
+      runConfig.optimize = if config.isOptimize and config.isMinify
+        "none"
+      else
+        "uglify2"
 
-    runConfig.optimize = if config.isOptimize and config.isMinify
-      "none"
-    else
-      "uglify2"
+
 
     configFile = if fs.existsSync config.require.commonConfig then config.require.commonConfig else file
     baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
