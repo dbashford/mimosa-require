@@ -65,10 +65,11 @@ class Optimizer
     else
       {}
 
-    runConfig.optimize = if config.isOptimize and config.isMinify
-      "none"
+    if config.isOptimize and config.isMinify
+      runConfig.optimize = "none"
     else
-      "uglify2"
+      unless runConfig.optimize?
+        runConfig.optimize = "uglify2"
 
     configFile = if fs.existsSync config.require.commonConfig then config.require.commonConfig else file
     baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
