@@ -4,7 +4,6 @@ fs = require 'fs'
 path = require 'path'
 
 wrench = require 'wrench'
-logger = require 'logmimosa'
 _ = require 'lodash'
 
 registry = require './register'
@@ -17,7 +16,7 @@ exports.cache = (config, options, next) ->
   cachingPath = config.require.optimize.moduleCachingPathFull
   baseUrl = options.runConfigs[0].baseUrl
   unless fs.existsSync cachingPath
-    logger.debug "Creating caching dir [[ #{cachingPath} ]]"
+    config.log.debug "Creating caching dir [[ #{cachingPath} ]]"
     wrench.mkdirSyncRecursive cachingPath, 0o0777
 
   _fetchAliasFiles()
@@ -63,7 +62,6 @@ _pathNames = (modName) ->
   cachePath: cachePath
 
 _write = (thisFile, thatFile) ->
-  logger.debug "Writing file [[ #{thatFile} ]]"
   text = fs.readFileSync(thisFile).toString()
   fs.writeFileSync thatFile, text
 

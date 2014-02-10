@@ -4,7 +4,7 @@ path = require 'path'
 fs =   require 'fs'
 
 requirejs = require 'requirejs'
-logger =  require 'logmimosa'
+logger =  null
 
 class Optimize
 
@@ -12,7 +12,8 @@ class Optimize
     almondInPath  = path.join __dirname, "assets", "almond.js"
     @almondText = fs.readFileSync almondInPath, "utf8"
 
-  execute: (runConfig, callback) =>
+  execute: (config, runConfig, callback) =>
+    logger = config.log
     if (runConfig.name? and runConfig.name isnt 'almond') or runConfig.name is null
       logger.info "r.js name changed from default of 'almond', so not using almond.js"
     else
@@ -25,7 +26,7 @@ class Optimize
       callback()
 
   _logRunConfig: (runConfig) ->
-    if logger.isDebug
+    if logger.isDebug()
       cache = []
       outString = JSON.stringify(runConfig, (key, value) ->
         if (typeof value is 'object' and value isnt null)

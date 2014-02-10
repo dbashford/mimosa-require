@@ -2,9 +2,10 @@ path = require 'path'
 fs = require 'fs'
 
 _ = require 'lodash'
-logger =  require 'logmimosa'
 
 track = require './tracker'
+
+logger =  null
 
 module.exports = class RequireRegister
 
@@ -76,6 +77,8 @@ module.exports = class RequireRegister
     {registry:reg, mainFiles:modRequireFiles}
 
   setConfig: (@config) ->
+    logger = config.log
+
     if @config.require.tracking.enabled
       track.setConfig @config
       previousTrackingInfo = track.readTrackingObject()

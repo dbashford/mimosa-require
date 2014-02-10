@@ -1,7 +1,5 @@
 "use strict"
 
-logger = require 'logmimosa'
-
 path = require "path"
 
 exports.defaults = ->
@@ -72,6 +70,7 @@ exports.placeholder = ->
   """
 
 exports.validate = (config, validators) ->
+  logger = config.log
   errors = []
   if validators.ifExistsIsObject(errors, "require config", config.require)
     javascriptDir = path.join config.watch.compiledDir, config.watch.javascriptDir

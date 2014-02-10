@@ -3,7 +3,6 @@
 fs = require 'fs'
 path = require 'path'
 
-logger = require 'logmimosa'
 wrench = require "wrench"
 _ = require 'lodash'
 
@@ -12,9 +11,14 @@ optimizer = require './tasks/optimize'
 builder = require './tasks/builder'
 moduleCacher = require './tasks/caching'
 
+logger = null
+
 exports.registration = (config, register) ->
 
   return unless config.require.verify.enabled or config.isOptimize
+
+  logger = config.log
+
   e = config.extensions
   register ['postClean'],                     'init',                _clean
   register ['add','update','buildFile'],      'betweenCompileWrite', _requireRegister, e.javascript
@@ -140,7 +144,7 @@ _requireOptimize = (config, options, done) ->
   i = 0
   next = =>
     if i < options.runConfigs.length
-      optimizer.execute options.runConfigs[i++], next
+      optimizer.execute config, options.runConfigs[i++], next
     else
       done()
   next()
@@ -166,7 +170,7 @@ _removeCombined = (config, options, next) ->
         logger.debug "Deleted directory [[ #{dirPath} ]]"
       catch err
         if err?.code is not "ENOTEMPTY"
-          logger.error "Unable to delete directory, #{dirPath}"
+          logger.error "Unable to delete directory [[ #{dirPath} ]]"
           logger.error err
 
   next()

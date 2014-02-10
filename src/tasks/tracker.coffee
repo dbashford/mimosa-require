@@ -5,13 +5,11 @@ path = require 'path'
 
 wrench = require 'wrench'
 _ = require 'lodash'
-logger = require 'logmimosa'
 
 trackingInfo = {}
-
 startupFilesProcessed = []
-
 trackKeys = ['shims', 'deps', 'aliases', 'mappings', 'packages']
+logger = null
 
 _createEmptyTrackingInfo = ->
   trackingInfo =
@@ -27,6 +25,7 @@ config = {}
 trackingFilePath = ""
 
 exports.setConfig = (_config) ->
+  logger = _config.log
   config = _config
   trackingFilePath = config.require.tracking.pathFull
 
