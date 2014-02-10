@@ -101,7 +101,7 @@ _validateAndSetTrackingInfo = (ti) ->
 
   if badPaths.length > 0
     logger.info "mimosa-require has bad tracking information and will need to rebuild its tracking information by forcing a recompile of all JavaScript. Nothing to worry about, this can be caused by moving, changing or deleting files while Mimosa isn't watching."
-    if logger.isDebug
+    if logger.isDebug()
       badPathsMsg = badPaths.join('\n')
       logger.debug badPathsMsg
     config.__forceJavaScriptRecompile = true
