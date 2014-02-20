@@ -4,6 +4,7 @@ fs = require 'fs'
 _ = require 'lodash'
 
 track = require './tracker'
+parse = require './rjs/parse'
 
 logger =  null
 
@@ -97,21 +98,15 @@ module.exports = class RequireRegister
       #logger.debug "Root Javascript directory set at [[ #{@rootJavaScriptDir} ]]"
 
   process: (fileName, source) ->
-    require = requirejs = @_require(fileName)
-    require.config = requirejs.config = require
-    define = @_define(fileName)
-    define.amd = {jquery:true}
-    # pretend this isn't node
-    exports = undefined
-    window = {}
-    @_requirejs(requirejs)
-    try
-      eval(source)
-      if not @startupComplete and @config.require.tracking.enabled
-        track.fileProcessed fileName
-    catch e
-      @_logger "File named [[ #{fileName} ]] is not wrapped in a 'require' or 'define' function call.", "warn"
-      @_logger "#{e}", 'warn'
+    fileData = @_parse( fileName, source)
+
+    if fileData.requireFile
+      @_require fileName, fileData.deps, fileData.config
+    else
+      @_handleDeps fileName, fileData.deps
+
+    if not @startupComplete and @config.require.tracking.enabled
+      track.fileProcessed fileName
 
   remove: (fileName) ->
     if @config.require.tracking.enabled
@@ -140,7 +135,8 @@ module.exports = class RequireRegister
 
     bases = []
     for base, deps of @tree
-      bases.push(base) if deps.indexOf(fileName) >= 0
+      if deps.indexOf(fileName) >= 0
+        bases.push(base)
 
     #logger.debug "Dependency tree bases for file [[ #{fileName} ]] are: #{bases.join('\n')}"
 
@@ -167,11 +163,27 @@ module.exports = class RequireRegister
       if osPath.indexOf(key) is 0
         return osPath.replace(key, fullObject[key])
 
-    return filePath
+    filePath
 
   ###
-  Private
   ###
+
+  _parse: (fileName, source) ->
+    modName = fileName.replace( @rootJavaScriptDir, '').substring(1)
+    modName = modName.replace(path.extname(modName), '')
+    result = parse modName, fileName, source, { findNestedDependencies: true }
+
+    isRequireFile = false
+    rci = parse.findConfig source
+    withoutCommonJS = _.without(result, "COMMONJS")
+    if rci.requireCount
+      numCommonJS = result.length - withoutCommonJS.length
+      if numCommonJS isnt rci.requireCount
+        isRequireFile = true
+
+    deps: withoutCommonJS
+    config: rci.config
+    requireFile: isRequireFile
 
   _removeFileFromCache: (fileName) =>
     [@shims, @depsRegistry, @aliasFiles, @mappings, @packages].forEach (obj) ->
@@ -188,28 +200,25 @@ module.exports = class RequireRegister
     #else
       #logger.debug message
 
-  _require: (fileName) ->
-    (deps, callback, errback, optional) =>
-      [deps, config] = @_requireOverride(deps, callback, errback, optional)
-      #logger.debug "Inside require function call for [[ #{fileName} ]], file has depedencies of:\n#{deps}"
+  _require: (fileName, deps, config) ->
+    #logger.debug "Inside require function call for [[ #{fileName} ]], file has depedencies of:\n#{deps}"
 
-      if config or deps
-        #logger.debug "[[ #{fileName} ]] has require configuration inside of it:\n#{JSON.stringify(config, null, 2)}"
-        @requireFiles.push fileName unless fileName in @requireFiles
-        if @config.require.tracking.enabled
-          track.requireFiles @requireFiles
+    unless fileName in @requireFiles
+      @requireFiles.push fileName
 
-        if config
-          @_handleConfigPaths(fileName, config.map ? null, config.paths ? null, config.packages ? null)
-          @_handleShims(fileName, config.shim ? null)
+    if @config.require.tracking.enabled
+      track.requireFiles @requireFiles
 
-      if config?
-        if config.deps
-          deps = deps.concat config.deps
+    if config
+      @_handleConfigPaths(fileName, config.map ? null, config.paths ? null, config.packages ? null)
+      @_handleShims(fileName, config.shim ? null)
 
-        @_mergeOriginalConfig config
+      if config.deps
+        deps = deps.concat config.deps
 
-      @_handleDeps(fileName, deps)
+      @_mergeOriginalConfig config
+
+    @_handleDeps(fileName, deps)
 
   _mergeOriginalConfig: (config) ->
     ["shim", "paths", "map", "packages", "config"].forEach (name) =>
@@ -222,25 +231,6 @@ module.exports = class RequireRegister
 
         if @config.require.tracking.enabled
           track.originalConfig @originalConfig
-
-  _define: (fileName) ->
-    (id, deps, funct) =>
-      deps = @_defineOverride(id, deps, funct)
-      #logger.debug "Inside define block for [[ #{fileName} ]], found dependencies:\n#{deps}"
-      @_handleDeps(fileName, deps)
-
-  # may not be necessary, but for future reference
-  _requirejs: (r) ->
-    r.version = ''
-    r.onError = ->
-    r.jsExtRegExp = /^\/|:|\?|\.js$/
-    r.isBrowser = true
-    r.load = ->
-    r.exec = ->
-    r.toUrl = -> ""
-    r.undef = ->
-    r.defined = ->
-    r.specified = ->
 
   _deleteForFileName: (fileName, aliases) ->
     #logger.debug "Deleting aliases for file name [[ #{fileName} ]]"
@@ -608,48 +598,5 @@ module.exports = class RequireRegister
         "#{path.normalize(fullPath)}.js"
     else
       null
-
-  _defineOverride: (name, deps, callback) ->
-    if typeof name isnt 'string'
-      callback = deps
-      deps = name
-
-    if !Array.isArray(deps)
-      callback = deps
-      deps = []
-
-    @_findDepsInCallback(callback, deps)
-
-    deps
-
-  _requireOverride: (deps, callback, errback, optional) ->
-    if !Array.isArray(deps) and typeof deps isnt 'string'
-      config = deps
-      if Array.isArray(callback)
-        deps = callback
-        callback = errback
-      else
-        deps = []
-
-    if !Array.isArray(deps)
-      #logger.warn "Not validating dependencies [[ #{deps} ]]. 'require' dependencies not set correctly. Dependencies should be an array."
-      deps = []
-
-    @_findDepsInCallback(callback, deps)
-
-    [deps, config]
-
-  _findDepsInCallback: (callback, deps) =>
-    if callback? and _.isFunction(callback)
-      callback.toString()
-        .replace(@commentRegExp, '')
-        .replace @requireStringRegexForArrayDeps, (match, dep) ->
-          dep.split(',').map (str) ->
-            str = str.trim()
-            str.substring(1, str.length - 1)
-          .forEach (str) ->
-            deps.push str
-        .replace @requireStringRegex, (match, dep) ->
-          deps.push(dep)
 
 module.exports = new RequireRegister()
