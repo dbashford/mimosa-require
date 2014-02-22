@@ -100,13 +100,15 @@ module.exports = class RequireRegister
   process: (fileName, source) ->
     fileData = @_parse( fileName, source)
 
-    if fileData.requireFile
-      @_require fileName, fileData.deps, fileData.config
-    else
-      @_handleDeps fileName, fileData.deps
+    if fileData
 
-    if not @startupComplete and @config.require.tracking.enabled
-      track.fileProcessed fileName
+      if fileData.requireFile
+        @_require fileName, fileData.deps, fileData.config
+      else
+        @_handleDeps fileName, fileData.deps
+
+      if not @startupComplete and @config.require.tracking.enabled
+        track.fileProcessed fileName
 
   remove: (fileName) ->
     if @config.require.tracking.enabled
@@ -171,10 +173,15 @@ module.exports = class RequireRegister
   _parse: (fileName, source) ->
     modName = fileName.replace( @rootJavaScriptDir, '').substring(1)
     modName = modName.replace(path.extname(modName), '')
-    result = parse modName, fileName, source, { findNestedDependencies: true }
+
+    try
+      result = parse modName, fileName, source, { findNestedDependencies: true }
+      rci = parse.findConfig source
+    catch err
+      logger.error "Unable to parse [[ #{fileName} ]]", err
+      return null
 
     isRequireFile = false
-    rci = parse.findConfig source
     withoutCommonJS = _.without(result, "COMMONJS")
     if rci.requireCount
       numCommonJS = result.length - withoutCommonJS.length
