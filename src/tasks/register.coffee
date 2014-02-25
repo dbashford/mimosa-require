@@ -178,7 +178,7 @@ module.exports = class RequireRegister
       result = parse modName, fileName, source, { findNestedDependencies: true }
       rci = parse.findConfig source
     catch err
-      logger.error "Unable to parse [[ #{fileName} ]]", err
+      logger.error "Unable to parse [[ #{fileName} ]]", err, {exitIfBuild:true}
       return null
 
     isRequireFile = false

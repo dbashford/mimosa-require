@@ -50,12 +50,12 @@ _configForNoInfer = (config, callback) ->
   else
     # See https://github.com/jrburke/r.js/issues/262, must verify here to stop r.js from process.exit
     unless ors.name? or ors.include? or ors.modules?
-      logger.error "Missing either a 'name', 'include' or 'modules' option in your require overrides"
+      logger.error "Missing either a 'name', 'include' or 'modules' option in your require overrides", {exitIfBuild:true}
       logger.warn "Cannot run optmization, require.optimize.overrides is missing key value(s)"
       return callback()
 
     unless ors.out? or ors.dir?
-      logger.error "Missing either an \"out\" or \"dir\" config value. If using \"appDir\" for a full project optimization, use \"dir\". If you want to optimize to one file, use \"out\"."
+      logger.error "Missing either an \"out\" or \"dir\" config value. If using \"appDir\" for a full project optimization, use \"dir\". If you want to optimize to one file, use \"out\".", {exitIfBuild:true}
       logger.warn "Cannot run optmization, require.optimize.overrides is missing key value(s)"
       return callback()
 

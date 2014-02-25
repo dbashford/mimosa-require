@@ -55,7 +55,7 @@ class Optimize
           logger.debug "Unexpected exit, not .out, not .dir."
         callback()
     catch err
-      logger.error "Error occured inside r.js optimizer, error is as follows... #{err}"
+      logger.error "Error occured inside r.js optimizer, error is as follows... #{err}", {exitIfBuild:true}
       callback()
 
   _reportSingleFileOutput: (runConfig, buildResponse)->
