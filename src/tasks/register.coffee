@@ -178,7 +178,7 @@ module.exports = class RequireRegister
       result = parse modName, fileName, source, { findNestedDependencies: true }
       rci = parse.findConfig source
     catch err
-      logger.error "Unable to parse [[ #{fileName} ]]", err, {exitIfBuild:true}
+      logger.error "mimosa-require: unable to parse [[ #{fileName} ]]", err, {exitIfBuild:true}
       return null
 
     isRequireFile = false
@@ -382,12 +382,12 @@ module.exports = class RequireRegister
           maps[fullDepPath] = mappings
         else
           @_logger "Mapping inside file [[ #{fileName} ]], refers to module that cannot be found [[ #{module} ]]."
-          continue
       #else
         #logger.debug "Not going to verify path for '*'"
 
     for module, mappings of maps
       for alias, aliasPath of mappings
+
         fullDepPath = @_resolvePath(fileName, aliasPath)
         if @_isWebPath fullDepPath
           #logger.debug "Web path [[ #{fullDepPath} ]] for alias [[ #{alias} ]]being accepted"
@@ -397,7 +397,15 @@ module.exports = class RequireRegister
         unless fs.existsSync fullDepPath
           fullDepPath = @_findAlias(aliasPath, @aliasFiles)
 
-        if alias
+        ###
+        console.log "***************************"
+        console.log module, alias, aliasPath
+        console.log "alias?", alias
+        console.log "dep path?", fullDepPath
+        console.log "***************************"
+        ###
+
+        if fullDepPath
           #logger.debug "Found mapped dependency [[ #{alias} ]] at [[ #{fullDepPath} ]]"
           @aliasFiles[fileName][alias] = "MAPPED!#{alias}"
           maps[module][alias] = fullDepPath
@@ -504,14 +512,25 @@ module.exports = class RequireRegister
     # handle plugins
     if dep.indexOf('!') >= 0
       [plugin, dep] = dep.split('!')
-      #logger.debug "Is plugin dependency, going to verify plugin path [[ #{plugin}]]"
-      @_verifyDep(fileName, plugin)
 
-      if dep?.length is 0
-        return #logger.debug "Plugin does not also have dependency"
+      if plugin is "css"
+        # at least verify the path to the css exists
 
-      #logger.debug "Also going to verify plugin dependency [[ #{dep} ]]"
-      plugin = true
+        cssPath = path.join(@rootJavaScriptDir, dep) + ".css"
+        unless fs.existsSync cssPath
+          @_logger "Path for CSS plugin [[ #{dep} ]], inside file [[ #{fileName} ]], cannot be found. Was resolved to [[ " + cssPath + " ]]"
+
+        return
+      else
+
+        #logger.debug "Is plugin dependency, going to verify plugin path [[ #{plugin}]]"
+        @_verifyDep(fileName, plugin)
+
+        if dep?.length is 0
+          return #logger.debug "Plugin does not also have dependency"
+
+        #logger.debug "Also going to verify plugin dependency [[ #{dep} ]]"
+        plugin = true
 
     # resolve path, if mapped, find already calculated map path
     fullDepPath = if dep.indexOf('MAPPED') is 0
