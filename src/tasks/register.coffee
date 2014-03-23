@@ -499,6 +499,16 @@ module.exports = class RequireRegister
     return unless deps?
     @_verifyDep(fileName, dep) for dep in deps
 
+  _findPluginPath: (dep, fileName) ->
+    fullPath = path.join(@rootJavaScriptDir, dep)
+    unless fs.existsSync fullPath
+      #logger.debug "Cannot find dependency [[ #{fullPath} ]], looking in paths..."
+      unless @_findAlias(dep, @aliasFiles)
+        #logger.debug "Cannot find plugin as path alias..."
+        pathWithDirReplaced = @_findPathWhenAliasDiectory(dep, true)
+        unless pathWithDirReplaced and fs.existsSync pathWithDirReplaced
+          @_logger "Plugin [[ #{dep} ]], inside file [[ #{fileName} ]], cannot be found."
+
   _verifyDep: (fileName, dep) ->
     # require, module = valid dependencies passed by require
     if dep is 'require' or dep is 'module' or dep is 'exports'
@@ -513,14 +523,13 @@ module.exports = class RequireRegister
     if dep.indexOf('!') >= 0
       [plugin, dep] = dep.split('!')
 
-      if plugin is "css"
-        # at least verify the path to the css exists
+      plugins = @config.require.verify?.plugins
 
-        cssPath = path.join(@rootJavaScriptDir, dep) + ".css"
-        unless fs.existsSync cssPath
-          @_logger "Path for CSS plugin [[ #{dep} ]], inside file [[ #{fileName} ]], cannot be found. Was resolved to [[ " + cssPath + " ]]"
-
-        return
+      if plugins and (plugins[plugin] or plugins[plugin] is null)
+        depPath = dep
+        if plugins[plugin]
+          depPath += "." + plugins[plugin]
+        return @_findPluginPath(depPath, fileName)
       else
 
         #logger.debug "Is plugin dependency, going to verify plugin path [[ #{plugin}]]"

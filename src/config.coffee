@@ -11,11 +11,15 @@ exports.defaults = ->
       path: ".mimosa/require/tracking.json"
     verify:
       enabled: true
+      plugins:
+        css:"css"
+        hbs:"hbs"
     optimize :
       moduleCachingPath: ".mimosa/require/moduleCaching"
       inferConfig:true
       modules:null
       overrides:{}
+
 
 exports.placeholder = ->
   """
@@ -45,6 +49,15 @@ exports.placeholder = ->
                                # root of the project.
       verify:                  # settings for requirejs path verification
         enabled: true          # Whether or not to perform verification
+        plugins:               # config for plugins. mimosa-require will verify plugin paths that
+                               # are listed as dependencies. It does not keep track of plugins
+                               # otherwise.
+          css:"css"            # these are the built-in default plugins. The key is the name of the
+          hbs:"hbs"            # plugin, the value before the !, and the value is the extension used
+                               # for those files. If you update this setting to add a new plugin,
+                               # consider opening a mimosa-require issue to make that plugin another
+                               # default. If the extension is already a part of the dependency path
+                               # set the value to null.
       optimize :
         inferConfig:true       # Mimosa figures out all you'd need for a simple r.js optimizer run.
                                # If you rather Mimosa not do that, set inferConfig to false and
@@ -67,6 +80,7 @@ exports.placeholder = ->
                                # overrides can also be a function that takes mimosa-require's
                                # inferred config for each module. This allows the inferred config
                                # to be updated and enhanced instead of just overridden.
+
   """
 
 exports.validate = (config, validators) ->
@@ -78,6 +92,11 @@ exports.validate = (config, validators) ->
 
     if validators.ifExistsIsObject(errors, "require.verify", config.require.verify)
       validators.ifExistsIsBoolean(errors, "require.verify.enabled", config.require.verify.enabled)
+
+      if validators.ifExistsIsObject(errors, "require.verify.plugins", config.require.verify.plugins)
+        Object.keys(config.require.verify.plugins).forEach (key) ->
+          unless (typeof config.require.verify.plugins[key] is "string") or config.require.verify.plugins[key] is null
+            errors.push "require.verify.plugins values must be strings"
 
     if validators.ifExistsIsObject(errors, "require.optimize", config.require.optimize)
       if validators.ifExistsIsString(errors, "require.optimize.moduleCachingPath", config.require.optimize.moduleCachingPath)
