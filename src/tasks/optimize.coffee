@@ -3,7 +3,7 @@
 path = require 'path'
 fs =   require 'fs'
 
-requirejs = require 'requirejs'
+requirejs = null
 logger =  null
 
 class Optimize
@@ -44,6 +44,9 @@ class Optimize
       logger.info "Beginning r.js optimization"
 
     @_logRunConfig runConfig
+
+    unless requirejs
+      requirejs = require 'requirejs'
 
     try
       requirejs.optimize runConfig, (buildResponse) =>

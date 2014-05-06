@@ -4,8 +4,7 @@ fs = require 'fs'
 _ = require 'lodash'
 
 track = require './tracker'
-parse = require './rjs/parse'
-
+parse = null
 logger =  null
 
 module.exports = class RequireRegister
@@ -173,6 +172,9 @@ module.exports = class RequireRegister
   _parse: (fileName, source) ->
     modName = fileName.replace( @rootJavaScriptDir, '').substring(1)
     modName = modName.replace(path.extname(modName), '')
+
+    unless parse
+      parse = require './rjs/parse'
 
     try
       result = parse modName, fileName, source, { findNestedDependencies: true }
