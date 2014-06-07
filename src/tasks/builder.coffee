@@ -76,6 +76,7 @@ _setupConfigForModule = (config, file) ->
   configFile = if fs.existsSync config.require.commonConfig then config.require.commonConfig else file
   baseUrl = path.join config.watch.compiledDir, config.watch.javascriptDir
 
+  runConfig.allowSourceOverwrites = true  unless runConfig.allowSourceOverwrites? or runConfig.allowSourceOverwrites is null
   runConfig.logLevel = 3                  unless runConfig.logLevel? or runConfig.logLevel is null
   runConfig.baseUrl = baseUrl             unless runConfig.baseUrl? or runConfig.baseUrl is null
   runConfig.wrap = true                   unless runConfig.wrap? or runConfig.wrap is null
@@ -83,7 +84,7 @@ _setupConfigForModule = (config, file) ->
   runConfig.mainConfigFile = configFile   unless runConfig.mainConfigFile? or runConfig.mainConfigFile is null
 
   # When using modules, have different default config
-  # need dir instead out out, need to keep build dir or r.js removes it
+  # need dir instead of out, need to keep build dir or r.js removes it
   if config.require.optimize.modules
     runConfig.dir = path.relative config.root, config.watch.compiledJavascriptDir
     runConfig.modules = _.clone config.require.optimize.modules, true
