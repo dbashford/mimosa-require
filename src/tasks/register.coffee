@@ -18,6 +18,8 @@ module.exports = class RequireRegister
   packages: {}
   shims: {}
   originalConfig: {}
+  # processed:{}
+  # syncCall:0
 
   requireStringRegex: /[^.]\s*require\s*\(\s*["']([^'"\s]+)["']\s*\)/g
   requireStringRegexForArrayDeps: /[^.]\s*require\s*\(\s*\[\s*((["'][^'"\s]+["'][,\s]*?)+)\]/g
@@ -258,6 +260,17 @@ module.exports = class RequireRegister
     @_verifyShims(file, shims) for file, shims of @shims
     @_buildTree()
 
+    ###
+    console.log(@processed)
+
+    total = 0;
+    for i, v of @processed
+      total+=v;
+
+    console.log("TOTAL IS ", total)
+    console.log("SYNC CALLS,", @syncCall)
+    ###
+
   _handleShims: (fileName, shims) ->
     if @config.require.tracking.enabled
       track.shims fileName, shims
@@ -297,32 +310,47 @@ module.exports = class RequireRegister
       #logger.debug "Full tree for require file [[ #{f} ]] is:\n#{JSON.stringify(@tree[f], null, f)}"
 
   _addDepsToTree: (f, dep, origDep) ->
+
+    ###
+    if @processed[dep]
+      @processed[dep] = @processed[dep] + 1
+    else
+      @processed[dep] = 1
+    ###
+
     unless @depsRegistry[dep]?
       return #logger.debug "Dependency registry has no depedencies for [[ #{dep} ]]"
 
     for aDep in @depsRegistry[dep]
-      unless fs.existsSync aDep
-        #logger.debug "Cannot find dependency [[ #{aDep} ]] for file [[ #{dep} ]], checking aliases/paths/maps"
-        aDep = @_findAlias(aDep, @aliasFiles)
 
-        unless aDep?
-          return #logger.debug "Cannot find dependency [[ #{aDep} ]] in aliases, is likely bad path"
+      # only process a dep if it hasn't been
+      # added already to this root file
+      if @tree[f].indexOf(aDep) is -1
 
-        if aDep.indexOf('MAPPED!') >= 0
-          aDep = @_findMappedDependency(dep, aDep)
-          #logger.debug "Dependency found in mappings [[ #{aDep} ]]"
+        # @syncCall++
 
-      #logger.debug "Resolved depencency for file [[ #{dep} ]] to [[ #{aDep} ]]"
-      if @tree[f].indexOf(aDep) < 0
-        #logger.debug "Adding dependency [[ #{aDep} ]] to the tree"
-        @tree[f].push(aDep)
-      #else
-        #logger.debug "Dependency [[ #{aDep} ]] already in the tree, skipping"
+        unless fs.existsSync aDep
+          #logger.debug "Cannot find dependency [[ #{aDep} ]] for file [[ #{dep} ]], checking aliases/paths/maps"
+          aDep = @_findAlias(aDep, @aliasFiles)
 
-      if aDep isnt origDep
-        @_addDepsToTree(f, aDep, dep)
-      #else
-        #logger.debug "[[ #{aDep} ]] may introduce a circular dependency"
+          unless aDep?
+            return #logger.debug "Cannot find dependency [[ #{aDep} ]] in aliases, is likely bad path"
+
+          if aDep.indexOf('MAPPED!') >= 0
+            aDep = @_findMappedDependency(dep, aDep)
+            #logger.debug "Dependency found in mappings [[ #{aDep} ]]"
+
+        #logger.debug "Resolved depencency for file [[ #{dep} ]] to [[ #{aDep} ]]"
+        if @tree[f].indexOf(aDep) < 0
+          #logger.debug "Adding dependency [[ #{aDep} ]] to the tree"
+          @tree[f].push(aDep)
+        #else
+          #logger.debug "Dependency [[ #{aDep} ]] already in the tree, skipping"
+
+        if aDep isnt origDep
+          @_addDepsToTree(f, aDep, dep)
+        #else
+          #logger.debug "[[ #{aDep} ]] may introduce a circular dependency"
 
   _handleConfigPaths: (fileName, maps, paths, packages) ->
     packages = @_normalizeConfigPackages(packages)
