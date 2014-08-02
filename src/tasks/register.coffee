@@ -18,8 +18,8 @@ module.exports = class RequireRegister
   packages: {}
   shims: {}
   originalConfig: {}
-  # processed:{}
-  # syncCall:0
+  processed:{}
+  syncCall:0
 
   requireStringRegex: /[^.]\s*require\s*\(\s*["']([^'"\s]+)["']\s*\)/g
   requireStringRegexForArrayDeps: /[^.]\s*require\s*\(\s*\[\s*((["'][^'"\s]+["'][,\s]*?)+)\]/g
@@ -260,8 +260,9 @@ module.exports = class RequireRegister
     @_verifyShims(file, shims) for file, shims of @shims
     @_buildTree()
 
-    ###
-    console.log(@processed)
+    #console.log(Object.keys(@processed).sort())
+    for baseFile, deps of @tree
+      console.log("\n" + deps.sort().join("\n"))
 
     total = 0;
     for i, v of @processed
@@ -269,7 +270,6 @@ module.exports = class RequireRegister
 
     console.log("TOTAL IS ", total)
     console.log("SYNC CALLS,", @syncCall)
-    ###
 
   _handleShims: (fileName, shims) ->
     if @config.require.tracking.enabled
@@ -311,12 +311,10 @@ module.exports = class RequireRegister
 
   _addDepsToTree: (f, dep, origDep) ->
 
-    ###
     if @processed[dep]
       @processed[dep] = @processed[dep] + 1
     else
       @processed[dep] = 1
-    ###
 
     unless @depsRegistry[dep]?
       return #logger.debug "Dependency registry has no depedencies for [[ #{dep} ]]"
@@ -325,9 +323,31 @@ module.exports = class RequireRegister
 
       # only process a dep if it hasn't been
       # added already to this root file
+
+      # is it in any tree?
+      # so has it already been processed?
+      #if @_inAnyTree aDep
+
+        # is it in THIS tree?
+        # because if it isn't need to grab
+        # its info and add it
+        #if @tree[f].indexOf(aDep) is -1
+          #@tree[f].push(aDep)
+          #if @depsRegistry[aDep]
+            #@tree[f].push @depsRegistry[aDep]...
+
+            ###
+            @depsRegistry[aDep].forEach (depToAdd) =>
+              aliasDep = @_findAlias(depToAdd, @aliasFiles)
+              depToAdd = aliasDep or depToAdd
+              unless @tree[f].indexOf(depToAdd) > -1
+            ###
+
+      #else
+
       if @tree[f].indexOf(aDep) is -1
 
-        # @syncCall++
+        @syncCall++
 
         unless fs.existsSync aDep
           #logger.debug "Cannot find dependency [[ #{aDep} ]] for file [[ #{dep} ]], checking aliases/paths/maps"
@@ -351,6 +371,13 @@ module.exports = class RequireRegister
           @_addDepsToTree(f, aDep, dep)
         #else
           #logger.debug "[[ #{aDep} ]] may introduce a circular dependency"
+
+  _inAnyTree: (aDep) ->
+    for baseFile, deps of @tree
+      if deps.indexOf(aDep) > -1
+        return true
+
+    false
 
   _handleConfigPaths: (fileName, maps, paths, packages) ->
     packages = @_normalizeConfigPackages(packages)
