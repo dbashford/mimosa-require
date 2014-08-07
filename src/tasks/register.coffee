@@ -18,8 +18,8 @@ module.exports = class RequireRegister
   packages: {}
   shims: {}
   originalConfig: {}
-  processed:{}
-  syncCall:0
+  #processed:{}
+  #syncCall:0
 
   requireStringRegex: /[^.]\s*require\s*\(\s*["']([^'"\s]+)["']\s*\)/g
   requireStringRegexForArrayDeps: /[^.]\s*require\s*\(\s*\[\s*((["'][^'"\s]+["'][,\s]*?)+)\]/g
@@ -261,6 +261,7 @@ module.exports = class RequireRegister
     @_buildTree()
 
     #console.log(Object.keys(@processed).sort())
+    ###
     for baseFile, deps of @tree
       console.log("\n" + deps.sort().join("\n"))
 
@@ -270,6 +271,7 @@ module.exports = class RequireRegister
 
     console.log("TOTAL IS ", total)
     console.log("SYNC CALLS,", @syncCall)
+    ###
 
   _handleShims: (fileName, shims) ->
     if @config.require.tracking.enabled
@@ -311,10 +313,12 @@ module.exports = class RequireRegister
 
   _addDepsToTree: (f, dep, origDep) ->
 
+    ###
     if @processed[dep]
       @processed[dep] = @processed[dep] + 1
     else
       @processed[dep] = 1
+    ###
 
     unless @depsRegistry[dep]?
       return #logger.debug "Dependency registry has no depedencies for [[ #{dep} ]]"
@@ -347,7 +351,7 @@ module.exports = class RequireRegister
 
       if @tree[f].indexOf(aDep) is -1
 
-        @syncCall++
+        #@syncCall++
 
         unless fs.existsSync aDep
           #logger.debug "Cannot find dependency [[ #{aDep} ]] for file [[ #{dep} ]], checking aliases/paths/maps"
