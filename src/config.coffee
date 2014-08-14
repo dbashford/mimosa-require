@@ -128,13 +128,17 @@ exports.validate = (config, validators) ->
       logger.info "Optimize and minify both selected, setting r.js optimize property to 'none'"
 
     # helpful shortcut
-    config.__forceJavaScriptRecompile = config.require.verify.enabled or config.isOptimize
+    # But don't change it if something else set it to true
+    cameInAsForced = config.__forceJavaScriptRecompile is true
+    unless cameInAsForced
+      config.__forceJavaScriptRecompile = config.require.verify.enabled or config.isOptimize
 
     # manage tracking
     if config.isWatch and config.require.tracking.enabled
       try
         trackingData = require config.require.tracking.pathFull
-        config.__forceJavaScriptRecompile = false
+        unless cameInAsForced
+          config.__forceJavaScriptRecompile = false
       catch err
         logger.debug "Problem requiring require tracking file", err
         logger.debug "mimosa-require: javascript files need recompiling"
