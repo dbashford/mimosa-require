@@ -24,12 +24,12 @@ exports.registration = (config, register) ->
   register ['add','update','buildFile'],      'betweenCompileWrite', _requireRegister, e.javascript
   register ['add','update','buildExtension'], 'betweenCompileWrite', _requireRegister, e.template
   register ['remove'],                        'afterDelete',         _requireDelete,   e.javascript
-  register ['postBuild'],                     'init',      _buildDone
+  register ['postBuild'],                     'beforeOptimize',      _buildDone
 
   if config.isOptimize
     register ['add','update','remove'], 'beforeOptimize', _buildOptimizeConfigsFile, [e.javascript..., e.template...]
     register ['add','update','remove'], 'optimize',       _requireOptimize,          [e.javascript..., e.template...]
-    register ['postBuild'],             'init', _buildOptimizeConfigs
+    register ['postBuild'],             'beforeOptimize', _buildOptimizeConfigs
     register ['postBuild'],             'optimize',       _requireOptimize
 
     if config.isBuild
