@@ -185,14 +185,21 @@ module.exports = class RequireRegister
       logger.error "mimosa-require: unable to parse [[ #{fileName} ]]", err, {exitIfBuild:true}
       return null
 
+    depsWithoutNestedRequire = _.without(result, "NESTEDREQUIRE")
     isRequireFile = false
-    withoutCommonJS = _.without(result, "COMMONJS")
+
+    # has requires in it
     if rci.requireCount
-      numCommonJS = result.length - withoutCommonJS.length
-      if numCommonJS isnt rci.requireCount
+
+      # determine if requires are from commonjs syntax
+      numCommonJS = parse.findCjsDependencies( null, source ).length
+
+      # if requires aren't from commonjs
+      # and they are not nested require([], .. ) calls
+      if numCommonJS isnt rci.requireCount and depsWithoutNestedRequire.length is result.length
         isRequireFile = true
 
-    deps: withoutCommonJS
+    deps: depsWithoutNestedRequire
     config: rci.config
     requireFile: isRequireFile
 
