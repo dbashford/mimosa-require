@@ -199,7 +199,9 @@ module.exports = class RequireRegister
       if numCommonJS isnt rci.requireCount and depsWithoutNestedRequire.length is result.length
         isRequireFile = true
 
-    deps: depsWithoutNestedRequire
+    depsWithoutCommonJS = _.without(depsWithoutNestedRequire, "COMMONJS")
+
+    deps: depsWithoutCommonJS
     config: rci.config
     requireFile: isRequireFile
 
