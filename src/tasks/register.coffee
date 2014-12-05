@@ -300,7 +300,9 @@ module.exports = class RequireRegister
       unless fs.existsSync @_resolvePath(fileName, name)
         alias = @_findAlias(name, @aliasFiles)
         unless alias
-          @_logger "Shim path [[ #{name} ]] inside file [[ #{fileName} ]] cannot be found."
+          pathWithDirReplaced = @_findPathWhenAliasDiectory(name, false)
+          unless pathWithDirReplaced? and fs.existsSync pathWithDirReplaced
+            @_logger "Shim path [[ #{name} ]] inside file [[ #{fileName} ]] cannot be found."
 
       deps = if Array.isArray(config) then config else config.deps
       if deps?
@@ -309,7 +311,10 @@ module.exports = class RequireRegister
           unless fs.existsSync @_resolvePath(fileName, dep)
             alias = @_findAlias(dep, @aliasFiles)
             unless alias
-              @_logger "Shim [[ #{name} ]] inside file [[ #{fileName} ]] refers to a dependency that cannot be found [[ #{dep} ]]."
+              #logger.debug "Cannot find dependency as path alias..."
+              pathWithDirReplaced = @_findPathWhenAliasDiectory(dep, false)
+              unless pathWithDirReplaced? and fs.existsSync pathWithDirReplaced
+                @_logger "Shim [[ #{name} ]] inside file [[ #{fileName} ]] refers to a dependency that cannot be found [[ #{dep} ]]."
       # else
         #logger.debug "No 'deps' found for shim"
 
