@@ -33,7 +33,7 @@ exports.buildRunConfig = (config, fileName, doneCallback) ->
     numFiles = files.length
     logger.debug "Mimosa found #{numFiles} base config files"
     if numFiles is 0
-      logger.warn "No main modules found.  Not running optimization."
+      logger.info "No main modules found.  Not running optimization."
       doneCallback()
     else
       runConfigs = for file in files
