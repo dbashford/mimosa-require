@@ -338,33 +338,7 @@ module.exports = class RequireRegister
       return #logger.debug "Dependency registry has no depedencies for [[ #{dep} ]]"
 
     for aDep in @depsRegistry[dep]
-
-      # only process a dep if it hasn't been
-      # added already to this root file
-
-      # is it in any tree?
-      # so has it already been processed?
-      #if @_inAnyTree aDep
-
-        # is it in THIS tree?
-        # because if it isn't need to grab
-        # its info and add it
-        #if @tree[f].indexOf(aDep) is -1
-          #@tree[f].push(aDep)
-          #if @depsRegistry[aDep]
-            #@tree[f].push @depsRegistry[aDep]...
-
-            ###
-            @depsRegistry[aDep].forEach (depToAdd) =>
-              aliasDep = @_findAlias(depToAdd, @aliasFiles)
-              depToAdd = aliasDep or depToAdd
-              unless @tree[f].indexOf(depToAdd) > -1
-            ###
-
-      #else
-
       if @tree[f].indexOf(aDep) is -1
-
         #@syncCall++
 
         unless fs.existsSync aDep
