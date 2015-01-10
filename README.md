@@ -11,9 +11,11 @@ Add `'require'` to your list of modules.  That's all!  Mimosa will install the m
 
 ## Different Versions
 
-TBD
+There are currently two maintained versions of this.  The version in master is `2.*`` and the version in the [next](https://github.com/dbashford/mimosa-require/tree/next) branch is `3.*`
 
-http://dbashford.github.io/bumping-require-js-but-not-for-mimosa-yet/index.html
+Which is for you? If you need to use the `modules` config, you will want `2.*`.  If you will be optimizing your entire application into a single file, you should use `3.*`.
+
+For more details on the differences, [check out the blog post I made on the topic](http://dbashford.github.io/bumping-require-js-but-not-for-mimosa-yet/index.html).
 
 # Functionality
 
@@ -112,7 +114,7 @@ If you run mimosa with the `-D` flag on, right before mimosa-require executes r.
 
 You can also implement `overrides` with a function and print out the object that is passed to it.
 
-## Improve your build using `--minify` + `--optimize` together
+## Improve your build using `--minify` + `--optimize`
 
 Mentioned above, if you use both the `--minify` and `--optimize` flag, mimosa-require will assume minification is being performed by another module and it will not minify/mangle any JavaScript.
 
