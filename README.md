@@ -9,7 +9,7 @@ For more information regarding Mimosa, see http://mimosa.io
 
 Add `'require'` to your list of modules.  That's all!  Mimosa will install the module for you when you start `mimosa watch` or `mimosa build`.
 
-## Different Versions
+### Different Versions
 
 There are currently two maintained versions of this.  The version in master is `2.*`` and the version in the [next](https://github.com/dbashford/mimosa-require/tree/next) branch is `3.*`
 
@@ -39,9 +39,9 @@ Here's some of what this module does:
 * Only compile/concatenate those files that need it based on changed code.
 * Bundle optimized JavaScript with Almond
 
-## Ways to optimize
+### Ways to optimize
 
-### Single file optimization with Almond
+#### Single file optimization with Almond
 
 require.js is a huge library and when your application is concatenated into a single file, much of the library isn't necessary. [Almond](https://github.com/jrburke/almond) is a "minimal AMD API implementation for use after optimized builds". It contains just what is necessary to wire together your concatenated application.
 
@@ -49,21 +49,21 @@ By default, when building a single file output (i.e. not using the `optimize.mod
 
 mimosa-require comes with its own Almond that it will write into your `watch.compiledDir` for you.
 
-#### Source Maps
+##### Source Maps
 
 When `mimosa watch` is used with `--optimize` (and not also `--minify` which does minification outside of this module), mimosa-require will generate source maps for easy debugging in browser dev tools. `mimosa build` does not generate source maps. All cleans performed by various Mimosa tasks will clean up the generated `.src` and `.map` files. Because generation of source maps is configured via the r.js config, which can already be overridden in the `require` config, no additional config settings have been added to change the default behaviors.
 
-### Multi-file optimization with the `modules` config
+#### Multi-file optimization with the `modules` config
 
 The [MimosaDynamicRequire project](https://github.com/dbashford/MimosaDynamicRequire) is an example of a application that is bundled into several files. The `optimize.modules` config allows you to configure the individual files you want your application bundled into.
 
-#### Source Maps and `modules`
+##### Source Maps and `modules`
 
 Source maps are disabled by default for r.js builds that involve the modules config. Source maps are only generated when using `mimosa watch`, so when running `watch` with the `optimize` flag and a `modules` config, mimosa-require turns off source maps. Source maps do not cause any issues with the first r.js optimize run, but they do cause trouble with subsequent ones. Source maps can be forced on by adding `generateSourceMaps: true` to the `require.optimize.overrides`. Just know the 2nd+ runs will not output proper files.
 
-## r.js Optimizer Settings
+### r.js Optimizer Settings
 
-### Inferred r.js Optimizer Settings
+#### Inferred r.js Optimizer Settings
 
 mimosa-require monitors all the JavaScript files that are processed by Mimosa and learns several things from them. First, it determines from them what the dependency tree of your application is. Second, it will attempt to figure out what your `requirejs.config` (paths, shims, maps, etc) is.  From all that it learns, it can put together a basic r.js config.
 
@@ -88,7 +88,7 @@ For runs that involve the `optimize.modules` config, the following in inferred:
 * `keepBuildDir`: Keeps the build directory between builds.
 * `dir`: This is set to the relative path from the root of the project to the root of the javascript directory as defined in the `watch` config. This is where all the outputs from the run will be deposited.
 
-### Overriding/Amplifying Default Optimizer Settings
+#### Overriding/Amplifying Default Optimizer Settings
 
 Any of the [RequireJS optimizer configuration options](http://requirejs.org/docs/optimization.html#options) can be included in the `require.optimize.overrides` property of the mimosa-config. Settings can be both overridden and removed. To override an inferred r.js setting, put the override in `overrides`. To remove a default setting, set it to `null`.
 
@@ -98,33 +98,33 @@ mimosa-require can also be configured to not infer anything and to go entirely w
 
 Also use `require.optimize.inferConfig:false` if configuration settings are in script tags in an HTML file, or in any other file that does not compile to JavaScript. mimosa-config is only able to infer r.js configuration using JavaScript files. If a config (and require/requirejs method calls) are in script tags on an HTML page, mimosa-require will not find any modules to compile for optimization and therefore will not run optimization, so a custom configuration will need to be provided in `overrides` with `inferConfig` set to `false`.
 
-### Programmticaly take control of the optmizer with other Mimosa modules
+#### Take control of the optimizer with Mimosa modules
 
 mimosa-require can't know all the intricacies of a project. It can make a lot of educated guesses and put together a really good base r.js config, but there are times when complicated alterations must be made to the r.js config. `overrides` allows static changes to the r.js configuration, but that isn't always ideal. `require.optimize.inferConfig:false` loses all of the smarts Mimosa puts into building a r.js config. Ideally a project can take advantage of the work Mimosa puts into building the r.js config, and dynamically alter it as well.
 
 mimosa-require's building of the inferred r.js config, and the execution of the r.js optimization are pulled apart in two separate steps in Mimosa's workflows. Config building executes during the `beforeOptimize` step, and execution during the `optimize` step. This means a custom module can programmatically and dynamically alter the mimosa-require-prepared r.js configs before r.js execution occurs.
 
-For instance, maybe there are files to include in the r.js execution that are not pulled in as dependencies by r.js -- maybe all `.html` files via the requirejs text plugin -- and rather than listing them one by one in the `overrides`, they could be dynamically added so a list need not be maintained. A module could do this, executing during the `beforeOptimize` step, but after the configs have been built. In that module the codebase could be scanned for `.html` files and push them onto the r.js config include array.
+For instance, maybe there are files to include in the r.js execution that are not pulled in as dependencies by r.js -- maybe all `.html` files via the require.js text plugin -- and rather than listing them one by one in the `overrides`, they could be dynamically added so a list need not be maintained. A module could do this, executing during the `beforeOptimize` step, but after the configs have been built. In that module the codebase could be scanned for `.html` files and push them onto the r.js config include array.
 
 Doing this provides both Mimosa's smarts, and the intelligence Mimosa can't provide by way of a custom module. To get started building such a module, check out the long-named example [mimosa-requirebuild-textplugin-include](https://github.com/dbashford/mimosa-requirebuild-textplugin-include) which performs just the task mentioned above.
 
-### How can I see the inferred config?
+#### How can I see the inferred config?
 
 If you run mimosa with the `-D` flag on, right before mimosa-require executes r.js, it will write the full r.js config to the console.
 
 You can also implement `overrides` with a function and print out the object that is passed to it.
 
-## Improve your build using `--minify` + `--optimize`
+### Improve your build using `--minify` + `--optimize`
 
 Mentioned above, if you use both the `--minify` and `--optimize` flag, mimosa-require will assume minification is being performed by another module and it will not minify/mangle any JavaScript.
 
-### Omit files from minification
+#### Omit files from minification
 
 The r.js optimizer by itself is often good enough to handle minifying, compressing and pulling modules into single files; however, the occasional file does not take kindly to being run through Uglify and will be broken when compressed. The r.js optimizer is all or none. It does not allow omitting a file from compression if it is not compressing correctly.
 
 By turning off r.js' minification, it lets you selectively minify on your own using modules like [mimosa-minify-js](https://github.com/dbashford/mimosa-minify-js/). This will allow you to omit any files from minification prior to r.js running.
 
-### Speed up the build
+#### Speed up the build
 
 If a project has many pages, and therefore many optimized files that need to be written, using both flags at the same time will also speed up the build. If r.js is bundling files that are already minified, then the minified versions are used to build the many optimized files.
 
