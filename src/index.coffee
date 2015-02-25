@@ -10,5 +10,4 @@ module.exports =
   dependencyInfo:          plugin.dependencyInfo
   manipulatePathWithAlias: plugin.manipulatePathWithAlias
   defaults:                config.defaults
-  placeholder:             config.placeholder
   validate:                config.validate

@@ -151,6 +151,7 @@ require: {
     modules: null,
     moduleCachingPath: ".mimosa/require/moduleCaching",
     inferConfig:true,
+    removeCombined: true,
     overrides:{}
   }
 }
@@ -191,6 +192,9 @@ This setting is only valid when running a modules-based project. mimosa-require 
 
 #### `require.optimize.inferConfig` boolean
 mimosa-require infers many r.js optimizer settings. Set `inferConfig` to `false` to make mimosa-require not infer anything. See above for a discussion on what mimosa-require will infer.
+
+#### `require.optimize.removeCombined` boolean
+During `mimosa build` only, `removeCombined` is used to determine whether or not to to remove the assets that have been combined into optimized files.  By default, `removeCombine` is set to `true` (but only during `mimosa build`), which means any assets used to create the optimized files will be cleaned up (removed).  r.js does have its own `removeCombined` setting, but it is suggested to not use that along with a Mimosa application and mimosa-require.  mimosa-require may run r.js multiple times to create multiple outputs, and if the r.js `removeCombined` setting is used, r.js may remove files on a 1st build that 2nd and 3rd r.js build require to work correctly.  mimosa-require's `removeCombined` is only run once after all the r.js executions have completed.
 
 #### `require.optimize.overrides` object/function
 Used to make tweaks to the r.js configuration for asset optimization. Add r.js config settings as new properties inside the `require.optimize.overrides` object. To just unset a mimosa-require inferred value, set the property to `null`. `require.optimize.overrides` can also be a function. That function is passed the full inferred r.js config for the module being optimized. This provides the opportunity to amplify the inferred config rather than just replace it.
