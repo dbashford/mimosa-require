@@ -32,7 +32,7 @@ exports.registration = (config, register) ->
     register ['postBuild'],             'beforeOptimize', _buildOptimizeConfigs
     register ['postBuild'],             'optimize',       _requireOptimize
 
-    if config.isBuild
+    if config.isBuild and config.require.optimize.removeCombined
       register ['add','update','remove'], 'afterOptimize',  _removeCombined,         [e.javascript..., e.template...]
       register ['postBuild'],             'optimize',       _removeCombined
 
