@@ -11,7 +11,7 @@ Add `'require'` to your list of modules.  That's all!  Mimosa will install the m
 
 ### Different Versions
 
-There are currently two maintained versions of this.  The version in master is `2.*`` and the version in the [next](https://github.com/dbashford/mimosa-require/tree/next) branch is `3.*`
+There are currently two maintained versions of this.  The version in master is `2.*` and the version in the [next](https://github.com/dbashford/mimosa-require/tree/next) branch is `3.*`.
 
 Which is for you? If you need to use the `modules` config, you will want `2.*`.  If you will be optimizing your entire application into a single file, you should use `3.*`.
 
