@@ -139,14 +139,14 @@ require: {
   tracking: {
     enabled: true,
     path: ".mimosa/require/tracking.json"
-  }
+  },
   verify: {
     enabled: true,
     plugins: {
       css:"css",
       hbs:"hbs"
     }
-  }
+  },
   optimize : {
     modules: null,
     moduleCachingPath: ".mimosa/require/moduleCaching",
