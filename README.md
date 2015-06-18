@@ -135,6 +135,7 @@ If r.js is dealing with un-minified files, then those files have to be minified 
 ```javascript
 require: {
   exclude:[],
+  safeDeps:[],
   commonConfig:"common",
   tracking: {
     enabled: true,
@@ -159,6 +160,9 @@ require: {
 
 #### `require.exclude` array of string/regex
 When matching a file will keep that file from being processed by the mimosa-require module. This can be used to keep files from being considered main modules to be used for processing if require infers incorrectly. String paths must include the file name.
+
+#### `require.safeDeps` array of strings
+Dependencies that when encountered will not trigger validation.  If for some reason there is a dependency that is triggering a validation warning/error that you would like to go away, adding the string used for the dependency to safeDeps will make the warning/error go away.
 
 #### `require.commonConfig` string
 Location of common RequireJS configuration that is used across multiple pages/modules. See the [RequireJS multi-page application example on GitHub](https://github.com/requirejs/example-multipage/tree/master/www/js) for an example of using common configuration.

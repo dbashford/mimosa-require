@@ -5,6 +5,7 @@ path = require "path"
 exports.defaults = ->
   require:
     exclude:[]
+    safeDeps:[]
     commonConfig: "common"
     tracking:
       enabled: true
@@ -27,6 +28,8 @@ exports.validate = (config, validators) ->
   if validators.ifExistsIsObject(errors, "require config", config.require)
     javascriptDir = path.join config.watch.compiledDir, config.watch.javascriptDir
     validators.ifExistsFileExcludeWithRegexAndString(errors, "require.exclude", config.require, javascriptDir)
+
+    validators.ifExistsIsArrayOfStrings(errors, "require.safeDeps", config.require.safeDeps);
 
     if validators.ifExistsIsObject(errors, "require.verify", config.require.verify)
       validators.ifExistsIsBoolean(errors, "require.verify.enabled", config.require.verify.enabled)

@@ -1,6 +1,6 @@
 {
   "name": "mimosa-require",
-  "version": "3.1.5",
+  "version": "3.2.0",
   "homepage": "http://www.mimosa.io",
   "author": "David Bashford",
   "description": "AMD/RequireJS module for Mimosa browser development workflow tool",
@@ -31,7 +31,7 @@
     "source maps"
   ],
   "dependencies": {
-    "requirejs": "2.1.14",
+    "requirejs": "2.1.18",
     "lodash": "2.4.1",
     "wrench": "1.5.8",
     "esprima": "1.2.2"

@@ -558,9 +558,12 @@ module.exports = class RequireRegister
         unless pathWithDirReplaced and fs.existsSync pathWithDirReplaced
           @_logger "Plugin [[ #{dep} ]], inside file [[ #{fileName} ]], cannot be found."
 
+  _depIsOk: (dep) ->
+    dep is 'require' or dep is 'module' or dep is 'exports' or @config.require.safeDeps.indexOf(dep) > -1
+
   _verifyDep: (fileName, dep) ->
     # require, module = valid dependencies passed by require
-    if dep is 'require' or dep is 'module' or dep is 'exports'
+    if @_depIsOk dep
       return #logger.debug "Encountered keyword-esque dependency [[ #{dep} ]], ignoring."
 
     # as are web resources, CDN, etc
